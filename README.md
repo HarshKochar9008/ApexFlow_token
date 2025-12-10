@@ -2,6 +2,26 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
+## Environment variables
+
+Create a `.env` file (or `.env.local`) in the project root with the keys the app expects:
+
+- `VITE_PRIVY_APP_ID` – Privy application ID. Optional; if unset, Privy auth is skipped and the app still renders.
+- `VITE_CHATGPT5_API_URL` – Endpoint for the chat backend. Defaults to `/api/chat` when omitted.
+- `VITE_CHATGPT5_API_KEY` – API key sent as `Authorization: Bearer ...` for the chat backend. Optional if your endpoint does not require it.
+- `VITE_SOLANA_NETWORK` – Solana cluster (`devnet`, `testnet`, or `mainnet-beta`). Defaults to `devnet`.
+- `VITE_SOLANA_RPC` – Custom RPC URL. Optional; if unset, the cluster URL derived from `VITE_SOLANA_NETWORK` is used.
+
+Example:
+
+```
+VITE_PRIVY_APP_ID=your-privy-app-id
+VITE_CHATGPT5_API_URL=https://your-chat-endpoint.example.com
+VITE_CHATGPT5_API_KEY=your-chat-api-key
+VITE_SOLANA_NETWORK=devnet
+VITE_SOLANA_RPC=
+```
+
 Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh

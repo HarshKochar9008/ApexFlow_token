@@ -5,6 +5,10 @@
   line-height: 1.6;
   font-weight: 400;
   color: #eef1ff;
+  width: 100vw;
+  overflow-x: hidden;
+  height: 100% !important;
+  min-height: 100% !important;
   background-color: #0f0c2b;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -28,6 +32,7 @@
 body {
   margin: 0;
   min-height: 100vh;
+  height: 100vh;
   background: radial-gradient(circle at 20% 20%, #161142 0%, #0f0c2b 45%),
     radial-gradient(circle at 80% 0%, #1a1a4a 0%, transparent 30%),
     #0f0c2b;
@@ -45,4 +50,5 @@ button {
 
 #root {
   min-height: 100vh;
+  height: 100vh;
 }

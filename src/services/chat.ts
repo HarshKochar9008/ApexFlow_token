@@ -3,36 +3,56 @@ export type ChatMessage = {
   content: string
 }
 
-const API_URL = import.meta.env.VITE_CHATGPT5_API_URL || '/api/chat'
-const API_KEY = import.meta.env.VITE_CHATGPT5_API_KEY
+const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-1.5-flash'
+const GEMINI_API_URL =
+  import.meta.env.VITE_GEMINI_API_URL ||
+  `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
+const FALLBACK_REPLY =
+  'Gemini is temporarily unavailable. Using a local mock response: automation is drafted, ready to review.'
 
 export async function sendChatMessage(messages: ChatMessage[]): Promise<string> {
-  const payload = {
-    model: 'gpt-5',
-    messages,
+  if (!GEMINI_API_KEY) {
+    console.warn('Gemini API key missing. Set VITE_GEMINI_API_KEY.')
+    return FALLBACK_REPLY
   }
 
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (API_KEY) headers.Authorization = `Bearer ${API_KEY}`
+  // Gemini expects role "user" or "model"; treat system as user context.
+  const contents = messages.map((msg) => ({
+    role: msg.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: msg.content }],
+  }))
 
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(payload),
-  })
+  const url = GEMINI_API_URL.includes('?')
+    ? `${GEMINI_API_URL}&key=${GEMINI_API_KEY}`
+    : `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`
 
-  if (!response.ok) {
-    throw new Error(`Chat service error: ${response.status}`)
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents }),
+    })
+
+    if (!response.ok) {
+      console.error('Gemini chat error', response.status, response.statusText)
+      return FALLBACK_REPLY
+    }
+
+    const data = await response.json()
+    const reply =
+      data?.candidates?.[0]?.content?.parts
+        ?.map((part: { text?: string }) => part.text || '')
+        .join('')
+        .trim() ||
+      data?.reply ||
+      data?.content ||
+      FALLBACK_REPLY
+
+    return reply
+  } catch (err) {
+    console.error('Gemini chat request failed', err)
+    return FALLBACK_REPLY
   }
-
-  const data = await response.json()
-  // Support both OpenAI-style {choices} and simplified {reply}
-  const reply =
-    data?.choices?.[0]?.message?.content ??
-    data?.reply ??
-    data?.content ??
-    'No response from ChatGPT-5. Please try again.'
-
-  return reply
 }
 

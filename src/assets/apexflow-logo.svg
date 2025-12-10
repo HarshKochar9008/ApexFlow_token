@@ -1,9 +1,0 @@
-<svg width="240" height="160" viewBox="0 0 240 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="240" height="160" rx="24" fill="#0F0C2B"/>
-  <path d="M150 58c0-17.673-14.327-32-32-32s-32 14.327-32 32c0 8.075 3.046 15.446 8.05 21" stroke="#C8F02E" stroke-width="12" stroke-linecap="round"/>
-  <path d="M94 92c5.818 6.836 14.469 11 24 11 17.673 0 32-14.327 32-32" stroke="#C8F02E" stroke-width="12" stroke-linecap="round"/>
-  <path d="M176 60c0-6.627-5.373-12-12-12h-20" stroke="#C8F02E" stroke-width="12" stroke-linecap="round"/>
-  <path d="M168 76 148 48l28 8-8 20Z" fill="#C8F02E"/>
-  <text x="120" y="134" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="28" fill="white">APEXFLOW</text>
-</svg>
-
