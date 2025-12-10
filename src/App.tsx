@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
-import { Zap, Rocket, Shield, BotMessageSquare, ArrowRightLeft, BarChart3, LineChart, CreditCard } from 'lucide-react'
+import { Zap, Rocket, Shield, BotMessageSquare, ArrowUp, ArrowRightLeft, BarChart3, LineChart, Menu, X, User, Settings, LogOut, Wallet, Crown, ArrowUpRight, Copy } from 'lucide-react'
 const brandLogo = '/Logo.png'
+import { FaTelegramPlane } from "react-icons/fa";
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { sendChatMessage, type ChatMessage } from './services/chat'
@@ -85,7 +86,7 @@ function EmailLogin() {
   )
 }
 
-type Page = 'terminal' | 'metrics' | 'pricing'
+type Page = 'terminal' | 'metrics' | 'pricing' | 'profile'
 
 const navLinks: Array<{ key: Page; label: string }> = [
   { key: 'terminal', label: 'Terminal' },
@@ -168,7 +169,7 @@ const pricingPlans: PricingPlan[] = [
   {
     name: 'Pro',
     price: '$14.99',
-    stake: 'or stake >50,000 ETHY',
+    stake: 'or stake >50,000 ApexFlow',
     highlights: ['15,000 credits/month', '10 live Automations', 'Social Trading', 'Unlimited Terminal messages'],
     invite: '$20 per invited friend',
     cta: 'Upgrade',
@@ -177,7 +178,7 @@ const pricingPlans: PricingPlan[] = [
   {
     name: 'Expert',
     price: '$39.99',
-    stake: 'or stake >300,000 ETHY',
+    stake: 'or stake >300,000 ApexFlow',
     highlights: ['65,000 credits/month', '25 live Automations', 'Social Trading', 'Unlimited Terminal messages'],
     invite: '$25 per invited friend',
     cta: 'Upgrade',
@@ -186,7 +187,7 @@ const pricingPlans: PricingPlan[] = [
   {
     name: 'Whale',
     price: '$99.99',
-    stake: 'or stake >1,000,000 ETHY',
+    stake: 'or stake >1,000,000 ApexFlow',
     highlights: ['250,000 credits/month + bonus', '150 live Automations', 'Social Trading', 'Unlimited Terminal messages'],
     invite: '$30 per invited friend',
     cta: 'Upgrade',
@@ -211,8 +212,8 @@ const heroPrompts = [
 ] as const
 
 function App() {
-  const { connected } = useWallet()
-  const { authenticated, user } = usePrivy()
+  const { connected, publicKey } = useWallet()
+  const { authenticated, logout } = usePrivy()
   const [chatInput, setChatInput] = useState('')
   const [showLanding, setShowLanding] = useState(true)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
@@ -223,8 +224,9 @@ function App() {
   ])
   const [isSending, setIsSending] = useState(false)
   const [dummySolanaAccount, setDummySolanaAccount] = useState<string | null>(null)
-  const [showProfilePanel, setShowProfilePanel] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [page, setPage] = useState<Page>('terminal')
+  const [showProfilePopup, setShowProfilePopup] = useState(false)
   const canChat = connected || authenticated
   const activePageLabel = useMemo(() => navLinks.find((n) => n.key === page)?.label ?? 'Terminal', [page])
 
@@ -275,6 +277,33 @@ function App() {
     await sendMessage(prompt)
   }
 
+  const getDisplayAddress = () => {
+    if (connected && publicKey) return `${publicKey.toBase58().slice(0, 6)}...${publicKey.toBase58().slice(-4)}`
+    if (dummySolanaAccount) return `${dummySolanaAccount.slice(0, 6)}...${dummySolanaAccount.slice(-4)}`
+    return '0x2CeE...3F21'
+  }
+
+  const handleCopyAddress = async () => {
+    try {
+      const address = getDisplayAddress()
+      if (navigator?.clipboard) {
+        await navigator.clipboard.writeText(address)
+      }
+    } catch (err) {
+      console.error('Failed to copy address', err)
+    }
+  }
+
+  const handleProfileClick = () => {
+    setShowProfilePopup(!showProfilePopup)
+  }
+
+  const handleNavigateToProfile = () => {
+    setShowProfilePopup(false)
+    setPage('profile')
+  }
+
+
   if (showLanding) {
     return (
       <div className="landing">
@@ -283,9 +312,6 @@ function App() {
             <img src={brandLogo} alt="ApexFlow logo" className="brand-logo" />
             <span className="brand-name">ApexFlow</span>
           </div>
-          <button className="primary" onClick={() => setShowLanding(false)}>
-            Launch ApexFlow
-          </button>
         </div>
         <div className="landing-hero">
           <p className="eyebrow">Your autonomous trading assistant</p>
@@ -307,13 +333,45 @@ function App() {
 
   return (
     <div className="workspace-shell">
-      <aside className="side-nav">
+      {/* Global profile icon — fixed to top-right */}
+      <div className="profile-fab desktop-only profile-icon-wrapper">
+        <button className="profile-icon-btn" onClick={handleProfileClick}>
+          <User size={20} />
+        </button>
+        {showProfilePopup && (
+          <ProfilePopup 
+            onClose={() => setShowProfilePopup(false)}
+            onNavigateToProfile={handleNavigateToProfile}
+            onNavigateToPricing={() => { setShowProfilePopup(false); setPage('pricing'); }}
+            onLogout={() => { setShowProfilePopup(false); logout(); }}
+            getDisplayAddress={getDisplayAddress}
+            handleCopyAddress={handleCopyAddress}
+          />
+        )}
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="sidebar-overlay" 
+          onClick={() => setIsSidebarOpen(false)}
+          aria-label="Close sidebar"
+        />
+      )}
+      <aside className={`side-nav ${isSidebarOpen ? 'mobile-open' : ''}`}>
         <div className="side-brand">
           <img src={brandLogo} alt="ApexFlow" className="side-logo" />
           <div>
             <div onClick={() => setShowLanding(true)} className="side-title">ApexFlow</div>
             <div className="side-version">v1.0</div>
           </div>
+          <button 
+            className="sidebar-close-btn"
+            onClick={() => setIsSidebarOpen(false)}
+            aria-label="Close sidebar"
+          >
+            <X size={18} />
+          </button>
         </div>
         <div className="side-group">
           <p className="side-label">Workspace</p>
@@ -321,7 +379,10 @@ function App() {
             <button
               key={link.key}
               className={`side-link ${page === link.key ? 'active' : ''}`}
-              onClick={() => setPage(link.key)}
+              onClick={() => {
+                setPage(link.key)
+                setIsSidebarOpen(false)
+              }}
             >
               {link.label}
             </button>
@@ -338,82 +399,170 @@ function App() {
             Marketplace
           </button>
         </div>
+        <div className="side-group side-auth-group">
+          <p className="side-label">Connect & Login</p>
+          <div className="side-auth-buttons">
+            <WalletMultiButton className="wallet-btn side-wallet-btn" />
+            <button className="primary side-login-btn" onClick={scrollToEmailLogin}>
+              Login
+            </button>
+            <button 
+              className="ghost side-docs-btn" 
+              onClick={() => window.open('https://docs.apexflow.io', '_blank')}
+            >
+              Docs
+            </button>
+          </div>
+        </div>
         <div className="side-footer">
-          <button className="ghost small">Earn $30</button>
-          <WalletMultiButton className="wallet-btn wide" />
-          <button className="primary small" onClick={scrollToEmailLogin}>
-            Email Login
-          </button>
+          <div className="social-links">
+            <a href="https://x.com/ApexFlow" target="_blank" rel="noopener noreferrer">
+              <X size={18} />
+            </a>
+            <a href="https://t.me/ApexFlow" target="_blank" rel="noopener noreferrer">
+              <FaTelegramPlane size={18} />
+            </a>
+          </div>
         </div>
       </aside>
 
       <div className="workspace-main">
-        <header className="workspace-header">
-          <div className="crumb">
-            <span className="dot" /> {activePageLabel}
-          </div>
-          <div className="header-actions">
-            <button className="ghost">Docs</button>
-            <button className="primary" onClick={scrollToEmailLogin}>
-              Email Login
+        {/* Mobile Header */}
+        <header className="mobile-header">
+          <div className="mobile-header-left">
+            <button 
+              className="mobile-menu-btn"
+              onClick={() => setIsSidebarOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu size={18} />
             </button>
-            <WalletMultiButton className="wallet-btn" />
-            {authenticated && (
-              <button className="profile-fab" onClick={() => setShowProfilePanel((v) => !v)}>
-                <span className="profile-dot" />
-                <div className="profile-fab-text">
-                  <span>{user?.email?.address || 'Profile'}</span>
-                  <small>Solana ready</small>
-                </div>
+          </div>
+          <div className="mobile-header-credits">
+            <span className="mobile-credits-badge">STARTER</span>
+            <span className="mobile-credits-dot" />
+            <span className="mobile-credits-text">811 credits</span>
+          </div>
+          <div className="mobile-header-right">
+            <div className="profile-icon-wrapper">
+              <button className="profile-icon-btn" onClick={handleProfileClick}>
+                <User size={18} />
               </button>
-            )}
+              {showProfilePopup && (
+                <ProfilePopup 
+                  onClose={() => setShowProfilePopup(false)}
+                  onNavigateToProfile={handleNavigateToProfile}
+                  onNavigateToPricing={() => { setShowProfilePopup(false); setPage('pricing'); }}
+                  onLogout={() => { setShowProfilePopup(false); logout(); }}
+                  getDisplayAddress={getDisplayAddress}
+                  handleCopyAddress={handleCopyAddress}
+                />
+              )}
+            </div>
           </div>
         </header>
 
-        {authenticated && showProfilePanel && (
-          <div className="profile-flyout">
-            <div className="profile-head">
-              <div>
-                <p className="side-label">Logged in with Privy</p>
-                <p className="profile-title">{user?.email?.address || 'Authenticated user'}</p>
-              </div>
-              <button className="ghost small" onClick={() => setShowProfilePanel(false)}>
-                Close
-              </button>
-            </div>
-            <div className="profile-grid">
-              <div>
-                <p className="profile-label">Email</p>
-                <p className="profile-value">{user?.email?.address || 'Unknown email'}</p>
-              </div>
-              <div>
-                <p className="profile-label">Wallet</p>
-                <p className="profile-value">{connected ? 'Wallet connected' : 'Wallet not connected'}</p>
-              </div>
-              <div>
-                <p className="profile-label">Solana account</p>
-                <p className="profile-value monospace">{dummySolanaAccount || 'Generating...'}</p>
-              </div>
-            </div>
+        {/* Mobile Actions - Wallet Connect, Login, Docs */}
+        <div className="mobile-actions">
+          <div className="mobile-actions-row">
+            <WalletMultiButton className="wallet-btn mobile-wallet-btn" />
+            <button className="primary mobile-login-btn" onClick={scrollToEmailLogin}>
+              Login
+            </button>
           </div>
-        )}
+          <button 
+            className="ghost mobile-docs-btn" 
+            onClick={() => window.open('https://docs.apexflow.io', '_blank')}
+          >
+            Docs
+          </button>
+        </div>
+
+        {/* Desktop Header */}
+        <header className="workspace-header desktop-only">
+          <div className="crumb">
+            <span className="dot" /> {activePageLabel}
+          </div>
+          <div className="header-actions" />
+        </header>
+
 
         {page === 'terminal' && (
           <div className="chat-shell">
-            <div className="chat-header">
-              <div>
-                <p className="side-label">ApexFlow Chat</p>
-                <p className="chat-title">Chat with your trading agent</p>
-                <p className="muted">Natural language to automations, insights, and Solana-ready tasks.</p>
+            {/* Mobile Hero Section - shows when no messages or initial state */}
+            {chatMessages.length <= 1 && (
+              <div className="mobile-hero">
+                <div className="mobile-hero-brand">
+                  <img src={brandLogo} alt="ApexFlow" className="mobile-logo" />
+                  <span className="mobile-brand-name">ApexFlow</span>
+                  <span className="mobile-brand-ai">AI</span>
+                </div>
+                <h1 className="mobile-hero-title">Automate your trading strategies with your own AI Agent</h1>
+                <p className="mobile-hero-subtitle">Just ask ApexFlow to do anything, like:</p>
+                <div className="mobile-prompts">
+                  {heroPrompts.map(({ text }) => (
+                    <button key={text} className="mobile-prompt-item" onClick={() => handlePromptClick(text)}>
+                      <span className="prompt-prefix">&gt;_</span>
+                      <span className="prompt-text">{text.replace(/"/g, '')}</span>
+                    </button>
+                  ))}
+                </div>
+                <button className="mobile-cta primary large" onClick={() => canChat && handlePromptClick(heroPrompts[0].text)}>
+                  <Zap size={20} />
+                  Create Automation
+                </button>
+                {/* <div className="mobile-hero-chat-input">
+                  <div className="chat-input-bar-input">
+                    <textarea
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.currentTarget.value)}
+                      placeholder={canChat ? 'What I can do for you today...?' : 'Login or connect wallet to start chatting...'}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault()
+                          handleSend()
+                        }
+                      }}
+                      disabled={isSending || !canChat}
+                      rows={1}
+                    />
+                  </div>
+                  <button className="mobile-send-btn" onClick={handleSend} disabled={isSending || !canChat}>
+                    <ArrowUp size={18} />
+                  </button>
+                </div> */}
+                <div className="powered-by">
+                  <div className="powered-by-icons">
+                    <div className="powered-icon" />
+                    <div className="powered-icon" />
+                    <div className="powered-icon" />
+                    <div className="powered-icon" />
+                    <div className="powered-icon" />
+                  </div>
+                  <span className="powered-by-text">Powered by expert agents & plugins</span>
+                </div>
               </div>
-              <div className="chat-status">
-                <span className={`status-dot ${canChat ? 'online' : ''}`} />
-                <span>{canChat ? 'Ready' : 'Connect wallet or email to chat'}</span>
-              </div>
-            </div>
+            )}
 
-            <div className="chat-window">
-              {chatMessages.map((message, idx) => (
+            {/* Desktop Chat Header - Hide when chat is active */}
+            {chatMessages.length <= 1 && (
+              <div className="chat-header desktop-only">
+                <div>
+                  <p className="side-label">ApexFlow Chat</p>
+                  <p className="chat-title">Chat with your trading agent</p>
+                  <p className="muted">Natural language to automations, insights, and Solana-ready tasks.</p>
+                </div>
+                <div className="chat-status">
+                  <span className={`status-dot ${canChat ? 'online' : ''}`} />
+                  <span>{canChat ? 'Ready' : 'Connect wallet or email to chat'}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Chat Window - only show if messages exist */}
+            {chatMessages.length > 1 && (
+              <div className="chat-window">
+                {chatMessages.map((message, idx) => (
                 <div key={idx} className={`chat-message ${message.role}`}>
                   <div className="chat-avatar">{message.role === 'assistant' ? 'A' : 'You'.slice(0, 1)}</div>
                   <div className="chat-bubble-body">
@@ -438,18 +587,21 @@ function App() {
                   </div>
                 </div>
               )}
-            </div>
+              </div>
+            )}
 
-            <div className="prompt-suggestions">
-              {heroPrompts.map(({ text }) => (
-                <button key={text} className="prompt-chip" onClick={() => handlePromptClick(text)}>
-                  {text.replace(/"/g, '')}
-                </button>
-              ))}
-            </div>
+            {chatMessages.length <= 1 && (
+              <div className="prompt-suggestions desktop-only">
+                {heroPrompts.map(({ text }) => (
+                  <button key={text} className="prompt-chip" onClick={() => handlePromptClick(text)}>
+                    {text.replace(/"/g, '')}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {!canChat && (
-              <div className="chat-guard inline">
+              <div className="chat-guard inline desktop-only">
                 <div>
                   <p className="muted">Login or connect your wallet to chat with ApexFlow.</p>
                   <p className="muted">We only use this to personalize responses.</p>
@@ -461,88 +613,302 @@ function App() {
               </div>
             )}
 
-            <div className="chat-input-bar">
-              <input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder={canChat ? 'Ask ApexFlow anything...' : 'Login or connect wallet to start chatting...'}
-                disabled={isSending || !canChat}
-              />
-              <button className="primary" onClick={handleSend} disabled={isSending || !canChat}>
-                {isSending ? 'Thinking...' : 'Send'}
-              </button>
+            <div className="desktop-chat-input desktop-only">
+              <div className="desktop-chat-input-wrapper">
+                <textarea
+                  className="desktop-chat-textarea"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.currentTarget.value)}
+                  placeholder={canChat ? 'What I can do for you today...?' : 'Login or connect wallet to start chatting...'}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleSend()
+                    }
+                  }}
+                  disabled={isSending || !canChat}
+                  rows={2}
+                />
+                <button 
+                  className="desktop-chat-send-btn" 
+                  onClick={handleSend} 
+                  disabled={isSending || !canChat}
+                >
+                  <ArrowUp size={18} />
+                </button>
+              </div>
             </div>
           </div>
         )}
 
         {page === 'pricing' && <PricingPage />}
         {page === 'metrics' && <MetricsPage />}
+        {page === 'profile' && <ProfilePage onNavigate={setPage} onLogout={logout} getDisplayAddress={getDisplayAddress} authenticated={authenticated} />}
+
+        <div className="chat-input-bar mobile-input">
+          <div className="chat-input-bar-input">
+            <textarea
+              value={chatInput}
+              onChange={(e) => setChatInput(e.currentTarget.value)}
+              placeholder={canChat ? 'What I can do for you today...?' : 'Login or connect wallet to start chatting...'}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  handleSend()
+                }
+              }}
+              disabled={isSending || !canChat}
+              rows={1}
+            />
+          </div>
+          <button 
+            className="mobile-send-btn" 
+            onClick={handleSend} 
+            disabled={isSending || !canChat}
+          >
+            <ArrowUp size={18} />
+          </button>
+        </div>
       </div>
     </div>
+  )
+}
+
+function ProfilePopup({ 
+  onClose, 
+  onNavigateToProfile, 
+  onNavigateToPricing, 
+  onLogout, 
+  getDisplayAddress, 
+  handleCopyAddress
+}: {
+  onClose: () => void
+  onNavigateToProfile: () => void
+  onNavigateToPricing: () => void
+  onLogout: () => void
+  getDisplayAddress: () => string
+  handleCopyAddress: () => void
+}) {
+  return (
+    <>
+      <div className="profile-popup-overlay" onClick={onClose} />
+      <div className="profile-popup">
+        <div className="profile-popup-top">
+          <div className="profile-popup-plan-row">
+            <span className="profile-popup-plan-text">STARTER</span>
+            <div className="profile-popup-credits-info">
+              <span className="profile-popup-credits-dot" />
+              <span className="profile-popup-credits-text">1,000 credits</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="profile-popup-content">
+          <div className="profile-popup-wallet-info">
+            <Wallet size={16} className="wallet-icon-small" />
+            <div className="profile-popup-wallet-details">
+              <span className="profile-popup-wallet-address">{getDisplayAddress()}</span>
+              <button 
+                className="profile-popup-copy-btn" 
+                onClick={handleCopyAddress}
+                aria-label="Copy address"
+              >
+                <Copy size={14} />
+              </button>
+            </div>
+          </div>
+
+          <div className="profile-popup-apex-row">
+            <span className="profile-popup-apex-label" style={{ fontWeight: 'bold'  ,fontSize: '14px', color: '#fff'}}>ApexFlow Balance: </span>
+            <span className="profile-popup-apex-value">0.00</span>
+          </div>
+        </div>
+
+        <div className="profile-popup-divider" />
+
+        <div className="profile-popup-content">
+          <div className="profile-popup-current-plan">
+            <div className="profile-popup-plan-title">
+              <Crown size={16} />
+              <span>Current Plan</span>
+            </div>
+            <div className="profile-popup-plan-value">STARTER</div>
+            <button className="profile-popup-upgrade-btn" onClick={onNavigateToPricing}>
+              <ArrowUpRight size={16} />
+              Upgrade Plan
+            </button>
+          </div>
+        </div>
+
+        <div className="profile-popup-divider" />
+
+        <div className="profile-popup-content profile-popup-menu">
+          <button className="profile-popup-menu-item" onClick={onNavigateToProfile}>
+            <span>Settings</span>
+            <Settings size={16} />
+          </button>
+          <button className="profile-popup-menu-item profile-popup-logout-item" onClick={onLogout}>
+            <span>Log out</span>
+            <LogOut size={16} />
+          </button>
+        </div>
+      </div>
+    </>
   )
 }
 
 function PricingPage() {
   return (
     <div className="pricing-page">
-      <div className="page-head">
-        <div>
-          <p className="side-label">Plans and Pricing</p>
-          <h2 className="page-title">Pick the right plan before you scale</h2>
-          <p className="page-sub">Stake or subscribe — every tier unlocks more automations, credits, and perks.</p>
-        </div>
-        <div className="page-actions">
-          <button className="ghost">
-            <CreditCard size={16} /> Billing FAQ
-          </button>
-          <button className="primary">
-            <Zap size={16} /> Talk to sales
-          </button>
-        </div>
+      <div className="pricing-header">
+        <h2 className="pricing-title">Plans and Pricing</h2>
+        <p className="pricing-subtitle">Pick the right plan before you scale</p>
       </div>
 
       <div className="pricing-grid">
         {pricingPlans.map((plan) => (
           <div key={plan.name} className={`pricing-card ${plan.name === 'Expert' ? 'featured' : ''}`}>
-            <div className="pricing-top">
-              <div className="plan-name">
-                <span>{plan.name}</span>
-                {plan.badge && <span className="pill pill-soon">{plan.badge}</span>}
+            {plan.badge && plan.name === 'Expert' && (
+              <span className="pricing-badge">Most popular</span>
+            )}
+            <div className="pricing-card-header">
+              <h3 className="plan-name">{plan.name}</h3>
+              <div className="plan-price-row">
+                <span className="plan-price">{plan.price}</span>
+                {plan.stake && <span className="plan-stake">or stake {plan.stake.replace('or stake ', '')}</span>}
               </div>
-              <p className="plan-price">{plan.price}</p>
-              {plan.stake && <p className="plan-stake">{plan.stake}</p>}
-              {plan.footnote && <p className="plan-footnote">{plan.footnote}</p>}
             </div>
             <ul className="plan-list">
               {plan.highlights.map((item) => (
-                <li key={item}>✓ {item}</li>
+                <li key={item}>
+                  <span className="checkmark">✓</span>
+                  {item}
+                </li>
               ))}
               {plan.misses?.map((item: string) => (
-                <li key={item} className="muted">
-                  ✕ {item}
+                <li key={item} className="plan-miss">
+                  <span className="cross">✕</span>
+                  {item}
                 </li>
               ))}
             </ul>
-            {plan.invite && <p className="plan-invite">{plan.invite}</p>}
-            <button className={`plan-cta ${plan.name === 'Starter' ? 'ghost' : 'primary'}`}>{plan.cta}</button>
+            {plan.invite && (
+              <div className="plan-invite">
+                <span className="plan-invite-text">{plan.invite}</span>
+              </div>
+            )}
+            <button className={`plan-cta ${plan.name === 'Starter' ? 'ghost' : 'primary'}`}>
+              {plan.cta}
+            </button>
           </div>
         ))}
       </div>
 
-      <div className="pricing-notes">
-        <div className="note">
-          <Zap size={16} />
+      <div className="pricing-footer">
+        <p className="pricing-footer-text">
+          Each Automation execution = 10 credits • $0.02 per execution when out of credits
+        </p>
+        <p className="pricing-footer-text">
+          TradingView Advanced Charts are free to use across all tiers
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function ProfilePage({ onNavigate, onLogout, getDisplayAddress, authenticated }: { 
+  onNavigate: (page: Page) => void
+  onLogout: () => void
+  getDisplayAddress: () => string
+  authenticated: boolean
+}) {
+  const handleCopyAddress = async () => {
+    try {
+      const address = getDisplayAddress()
+      if (navigator?.clipboard) {
+        await navigator.clipboard.writeText(address)
+      }
+    } catch (err) {
+      console.error('Failed to copy address', err)
+    }
+  }
+
+  if (!authenticated) {
+    return (
+      <div className="profile-page">
+        <div className="page-head">
           <div>
-            <p className="note-title">Each Automation execution = 10 credits</p>
-            <p className="note-sub">$0.02 per execution when out of credits</p>
+            <p className="side-label">Profile</p>
+            <h2 className="page-title">Sign in to view your profile</h2>
+            <p className="page-sub">Connect your wallet or login with email to access your profile</p>
           </div>
         </div>
-        <div className="note">
-          <LineChart size={16} />
-          <div>
-            <p className="note-title">TradingView Advanced Charts are free to use</p>
-            <p className="note-sub">Included across all tiers for planning and automation</p>
+        <div className="profile-signin-card">
+          <p className="muted">Please sign in to continue</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="profile-page">
+      <div className="profile-container">
+        <div className="profile-header-section">
+          <div className="profile-plan-badges">
+            <span className="profile-plan-badge">STARTER</span>
+            <span className="profile-credits-badge">
+              <span className="profile-credits-dot" />
+              1,000 credits
+            </span>
           </div>
+        </div>
+
+        <div className="profile-wallet-section">
+          <div className="profile-wallet-card">
+            <div className="profile-wallet-header">
+              <Wallet size={18} />
+              <span className="profile-wallet-label">Wallet Address</span>
+            </div>
+            <div className="profile-wallet-address-row">
+              <span className="profile-wallet-address-text">{getDisplayAddress()}</span>
+              <button className="profile-icon-btn-small" onClick={handleCopyAddress} aria-label="Copy address">
+                <Copy size={16} />
+              </button>
+            </div>
+          </div>
+
+          <div className="profile-balance-card">
+            <div className="profile-balance-label">ApexFlow Balance</div>
+            <div className="profile-balance-value">0.00</div>
+          </div>
+        </div>
+
+        <div className="profile-plan-section">
+          <div className="profile-plan-card">
+            <div className="profile-plan-header">
+              <Crown size={18} />
+              <span className="profile-plan-label">Current Plan</span>
+            </div>
+            <div className="profile-plan-name-text">STARTER</div>
+            <button 
+              className="profile-upgrade-button"
+              onClick={() => onNavigate('pricing')}
+            >
+              <ArrowUpRight size={16} />
+              Upgrade Plan
+            </button>
+          </div>
+        </div>
+
+        <div className="profile-actions-section">
+          <button className="profile-action-btn">
+            <Settings size={18} />
+            <span>Settings</span>
+          </button>
+          <button className="profile-action-btn profile-logout-btn" onClick={onLogout}>
+            <LogOut size={18} />
+            <span>Log out</span>
+          </button>
         </div>
       </div>
     </div>
