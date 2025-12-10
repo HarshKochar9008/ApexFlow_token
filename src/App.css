@@ -3404,3 +3404,161 @@ h1 {
     right: -8px;
   }
 }
+
+/* Login Popup Modal */
+.login-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 440px;
+  background: rgba(15, 18, 25, 0.98);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  z-index: 9999;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.login-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.login-popup-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.login-popup-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.login-popup-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.login-popup-content {
+  padding: 24px;
+}
+
+.auth-card-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0;
+}
+
+.auth-card-popup .side-label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.auth-card-popup .auth-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+}
+
+.auth-card-popup input {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.auth-card-popup input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.auth-card-popup input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.auth-card-popup input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.auth-card-popup .auth-error {
+  color: #ff8c8c;
+  margin: 0;
+  font-size: 13px;
+  padding: 8px 0;
+}
+
+.auth-card-popup .pill {
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+/* Mobile responsive for login popup */
+@media (max-width: 768px) {
+  .login-popup {
+    width: 95%;
+    max-width: none;
+    border-radius: 12px;
+  }
+
+  .login-popup-header {
+    padding: 16px 20px;
+  }
+
+  .login-popup-title {
+    font-size: 18px;
+  }
+
+  .login-popup-content {
+    padding: 20px;
+  }
+
+  .auth-card-popup .auth-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .auth-card-popup .auth-row button {
+    width: 100%;
+  }
+}

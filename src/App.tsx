@@ -9,6 +9,25 @@ import { sendChatMessage, type ChatMessage } from './services/chat'
 import { useLoginWithEmail, usePrivy } from '@privy-io/react-auth'
 import { Keypair } from '@solana/web3.js'
 
+function LoginPopup({ onClose }: { onClose: () => void }) {
+  return (
+    <>
+      <div className="login-popup-overlay" onClick={onClose} />
+      <div className="login-popup">
+        <div className="login-popup-header">
+          <h2 className="login-popup-title">Login to ApexFlow</h2>
+          <button className="login-popup-close" onClick={onClose} aria-label="Close login">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="login-popup-content">
+          <EmailLogin />
+        </div>
+      </div>
+    </>
+  )
+}
+
 function EmailLogin() {
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
@@ -54,7 +73,7 @@ function EmailLogin() {
   const disabled = authenticated || status === 'sending' || status === 'logging-in'
 
   return (
-    <div className="auth-card" id="email-login">
+    <div className="auth-card-popup">
       <p className="side-label">Login with email (Privy)</p>
       <div className="auth-row">
         <input
@@ -227,6 +246,7 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [page, setPage] = useState<Page>('terminal')
   const [showProfilePopup, setShowProfilePopup] = useState(false)
+  const [showLoginPopup, setShowLoginPopup] = useState(false)
   const canChat = connected || authenticated
   const activePageLabel = useMemo(() => navLinks.find((n) => n.key === page)?.label ?? 'Terminal', [page])
 
@@ -234,11 +254,16 @@ function App() {
     if (authenticated && !dummySolanaAccount) {
       const keypair = Keypair.generate()
       setDummySolanaAccount(keypair.publicKey.toBase58())
+      setShowLoginPopup(false) // Close login popup when authenticated
     }
   }, [authenticated, dummySolanaAccount])
 
-  const scrollToEmailLogin = () => {
-    document.getElementById('email-login')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  const openLoginPopup = () => {
+    setShowLoginPopup(true)
+  }
+
+  const closeLoginPopup = () => {
+    setShowLoginPopup(false)
   }
 
   const sendMessage = async (rawText: string) => {
@@ -324,7 +349,7 @@ function App() {
             <button className="primary large" onClick={() => setShowLanding(false)}>
               Launch ApexFlow
             </button>
-            <button className="ghost large">Buy $APEX</button>
+            <button className="ghost large">Buy $APEX</button>  
           </div>
         </div>
       </div>
@@ -403,9 +428,11 @@ function App() {
           <p className="side-label">Connect & Login</p>
           <div className="side-auth-buttons">
             <WalletMultiButton className="wallet-btn side-wallet-btn" />
-            <button className="primary side-login-btn" onClick={scrollToEmailLogin}>
-              Login
-            </button>
+            {!authenticated && (
+              <button className="primary side-login-btn" onClick={openLoginPopup}>
+                Login
+              </button>
+            )}
             <button 
               className="ghost side-docs-btn" 
               onClick={() => window.open('https://docs.apexflow.io', '_blank')}
@@ -466,9 +493,11 @@ function App() {
         <div className="mobile-actions">
           <div className="mobile-actions-row">
             <WalletMultiButton className="wallet-btn mobile-wallet-btn" />
-            <button className="primary mobile-login-btn" onClick={scrollToEmailLogin}>
-              Login
-            </button>
+            {!authenticated && (
+              <button className="primary mobile-login-btn" onClick={openLoginPopup}>
+                Login
+              </button>
+            )}
           </div>
           <button 
             className="ghost mobile-docs-btn" 
@@ -607,7 +636,9 @@ function App() {
                   <p className="muted">We only use this to personalize responses.</p>
                 </div>
                 <div className="guard-actions">
-                  <EmailLogin />
+                  <button className="primary" onClick={openLoginPopup}>
+                    Login with Email
+                  </button>
                   <WalletMultiButton className="wallet-btn" />
                 </div>
               </div>
@@ -669,6 +700,11 @@ function App() {
             <ArrowUp size={18} />
           </button>
         </div>
+
+        {/* Login Popup Modal */}
+        {showLoginPopup && (
+          <LoginPopup onClose={closeLoginPopup} />
+        )}
       </div>
     </div>
   )
