@@ -3,56 +3,60 @@ export type ChatMessage = {
   content: string
 }
 
-const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-1.5-flash'
-const GEMINI_API_URL =
-  import.meta.env.VITE_GEMINI_API_URL ||
-  `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
-const FALLBACK_REPLY =
-  'Gemini is temporarily unavailable. Using a local mock response: automation is drafted, ready to review.'
+export interface ChatResponse {
+  content: string
+  error?: string
+  model?: string
+}
 
-export async function sendChatMessage(messages: ChatMessage[]): Promise<string> {
-  if (!GEMINI_API_KEY) {
-    console.warn('Gemini API key missing. Set VITE_GEMINI_API_KEY.')
-    return FALLBACK_REPLY
-  }
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
-  // Gemini expects role "user" or "model"; treat system as user context.
-  const contents = messages.map((msg) => ({
-    role: msg.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: msg.content }],
-  }))
-
-  const url = GEMINI_API_URL.includes('?')
-    ? `${GEMINI_API_URL}&key=${GEMINI_API_KEY}`
-    : `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`
-
+export async function sendChatMessage(
+  messages: ChatMessage[],
+  model: string = 'gpt-4o'
+): Promise<ChatResponse> {
   try {
-    const response = await fetch(url, {
+    const response = await fetch(`${API_URL}/api/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents }),
+      headers: { 
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ messages, model }),
     })
 
     if (!response.ok) {
-      console.error('Gemini chat error', response.status, response.statusText)
-      return FALLBACK_REPLY
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+      const errorMessage = errorData.error?.message || errorData.error || `HTTP ${response.status}`
+      console.error('Chat API error:', errorMessage)
+      return {
+        content: '',
+        error: errorMessage,
+      }
     }
 
     const data = await response.json()
-    const reply =
-      data?.candidates?.[0]?.content?.parts
-        ?.map((part: { text?: string }) => part.text || '')
-        .join('')
-        .trim() ||
-      data?.reply ||
-      data?.content ||
-      FALLBACK_REPLY
+    const content = data?.choices?.[0]?.message?.content
+    const usedModel = data?.model || model
 
-    return reply
+    if (!content) {
+      console.error('No content in OpenAI response:', data)
+      return {
+        content: '',
+        error: 'No response content from OpenAI',
+        model: usedModel,
+      }
+    }
+
+    return { 
+      content,
+      model: usedModel,
+    }
   } catch (err) {
-    console.error('Gemini chat request failed', err)
-    return FALLBACK_REPLY
+    console.error('Chat API request failed:', err)
+    return {
+      content: '',
+      error: err instanceof Error ? err.message : 'Service unavailable',
+    }
   }
 }
 

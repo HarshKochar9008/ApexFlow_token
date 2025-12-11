@@ -9,7 +9,6 @@ const privyAppId = import.meta.env.VITE_PRIVY_APP_ID ?? 'demo-app-id'
 
 function AppProviders({ children }: { children: ReactNode }) {
   if (!import.meta.env.VITE_PRIVY_APP_ID) {
-    // eslint-disable-next-line no-console
     console.warn('VITE_PRIVY_APP_ID not set; using demo-app-id. Add your real Privy app ID to enable auth.')
   }
 

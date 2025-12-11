@@ -1,13 +1,52 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
-import { Zap, Rocket, Shield, BotMessageSquare, ArrowUp, ArrowRightLeft, BarChart3, LineChart, Menu, X, User, Settings, LogOut, Wallet, Crown, ArrowUpRight, Copy } from 'lucide-react'
+import { Zap, Rocket, Shield, BotMessageSquare, ArrowUp, ArrowRightLeft, BarChart3, LineChart, Menu, X, User, Settings, LogOut, Wallet, Crown, ArrowUpRight, Copy, Trophy, Compass, Users, Flame, Gift, TrendingUp, Plus, Clock, PlayCircle, PauseCircle, Trash2, Check, Link2 } from 'lucide-react'
 const brandLogo = '/Logo.png'
 import { FaTelegramPlane } from "react-icons/fa";
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { sendChatMessage, type ChatMessage } from './services/chat'
 import { useLoginWithEmail, usePrivy } from '@privy-io/react-auth'
 import { Keypair } from '@solana/web3.js'
+import { VolumeChart, StrategiesChart, LatencyChart, SuccessRateChart, TVLChart, CopyTradersChart } from './components/MetricsCharts'
+import { parseAutomationPrompt, type AutomationDetails } from './utils/automationParser'
+
+type ChatMessage = {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+async function sendChatMessage(messages: ChatMessage[], model: string = 'gpt-4o'): Promise<{ content?: string; error?: string }> {
+  const API_URL = import.meta.env.VITE_API_URL || '/api/chat'
+  
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages,
+        model,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+      return { error: errorData.error || `HTTP error! status: ${response.status}` }
+    }
+
+    const data = await response.json()
+    
+    if (data.choices && data.choices[0] && data.choices[0].message) {
+      return { content: data.choices[0].message.content }
+    }
+    
+    return { error: 'Invalid response format from server' }
+  } catch (error) {
+    return { 
+      error: error instanceof Error ? error.message : 'Failed to connect to chat server' 
+    }
+  }
+}
 
 function LoginPopup({ onClose }: { onClose: () => void }) {
   return (
@@ -105,10 +144,11 @@ function EmailLogin() {
   )
 }
 
-type Page = 'terminal' | 'metrics' | 'pricing' | 'profile'
+type Page = 'terminal' | 'metrics' | 'pricing' | 'profile' | 'automations'
 
 const navLinks: Array<{ key: Page; label: string }> = [
   { key: 'terminal', label: 'Terminal' },
+  { key: 'automations', label: 'Automations' },
   { key: 'metrics', label: 'Metrics' },
   { key: 'pricing', label: 'Pricing' },
 ]
@@ -187,7 +227,7 @@ const pricingPlans: PricingPlan[] = [
   },
   {
     name: 'Pro',
-    price: '$14.99',
+    price: '$10',
     stake: 'or stake >50,000 ApexFlow',
     highlights: ['15,000 credits/month', '10 live Automations', 'Social Trading', 'Unlimited Terminal messages'],
     invite: '$20 per invited friend',
@@ -196,7 +236,7 @@ const pricingPlans: PricingPlan[] = [
   },
   {
     name: 'Expert',
-    price: '$39.99',
+    price: '$35',
     stake: 'or stake >300,000 ApexFlow',
     highlights: ['65,000 credits/month', '25 live Automations', 'Social Trading', 'Unlimited Terminal messages'],
     invite: '$25 per invited friend',
@@ -205,7 +245,7 @@ const pricingPlans: PricingPlan[] = [
   },
   {
     name: 'Whale',
-    price: '$99.99',
+    price: '$95',
     stake: 'or stake >1,000,000 ApexFlow',
     highlights: ['250,000 credits/month + bonus', '150 live Automations', 'Social Trading', 'Unlimited Terminal messages'],
     invite: '$30 per invited friend',
@@ -215,26 +255,26 @@ const pricingPlans: PricingPlan[] = [
 ] as const
 
 const metricCards: MetricCard[] = [
-  { label: 'Monthly Volume', value: '$184.2M', change: '+12.4%' },
-  { label: 'Strategies Live', value: '3,142', change: '+4.2%' },
+  { label: 'Monthly Volume', value: '8.2M', change: '+12.4%' },
+  { label: 'Strategies Live', value: '300', change: '+4.2%' },
   { label: 'Success Rate', value: '91.3%', change: '+0.8%' },
-  { label: 'Avg. Latency', value: '246 ms', change: '-3.1%' },
-  { label: 'TVL Managed', value: '$72.8M', change: '+9.5%' },
-  { label: 'Copy Traders', value: '12,884', change: '+6.3%' },
+  { label: 'Avg. Latency', value: '148 ms', change: '-3.1%' },
+  { label: 'TVL Managed', value: '$3.24M', change: '+9.5%' },
+  { label: 'Copy Traders', value: '9,018', change: '+6.3%' },
 ]
 
 const heroPrompts = [
-  { icon: Rocket, text: '"Apex, buy me 1000$ of SOL every 4h. Stop after spending 1000$"' },
-  { icon: ArrowRightLeft, text: '"Automate DCA 50$ daily; stop if drawdown exceeds 10%"' },
-  { icon: Shield, text: '"Check every 4 hours if token X is down 10% last day, then buy 500$"' },
-  { icon: BotMessageSquare, text: '"Alert me when 15m RSI < 30 on FACY and sell 50% when 10x from entry"' },
+  { icon: Rocket, text: '"Hey APEX, buy me 1000$ of APEX"' },
+  { icon: ArrowRightLeft, text: '"Automate DCA 50$ of APEX every day. Stop after spending 1000$"' },
+  { icon: Shield, text: '"Give me trending coins last 24h from Coingecko"' },
+  { icon: BotMessageSquare, text: '"If 15min RSI on FACY is below 30, buy it. Sell 50% when 10x from first buy"' },
+  { icon: Zap, text: '"Check every 4 hours if WIRE is down at least 10% last day, then buy 500$"' },
 ] as const
 
 function App() {
   const { connected, publicKey } = useWallet()
   const { authenticated, logout } = usePrivy()
   const [chatInput, setChatInput] = useState('')
-  const [showLanding, setShowLanding] = useState(true)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
@@ -244,10 +284,13 @@ function App() {
   const [isSending, setIsSending] = useState(false)
   const [dummySolanaAccount, setDummySolanaAccount] = useState<string | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.matchMedia('(max-width: 960px)').matches : false))
   const [page, setPage] = useState<Page>('terminal')
   const [showProfilePopup, setShowProfilePopup] = useState(false)
   const [showLoginPopup, setShowLoginPopup] = useState(false)
-  const canChat = connected || authenticated
+  const [automationDetails, setAutomationDetails] = useState<AutomationDetails | null>(null)
+  const [showAutomationModal, setShowAutomationModal] = useState(false)
+  const isLoggedIn = connected || authenticated
   const activePageLabel = useMemo(() => navLinks.find((n) => n.key === page)?.label ?? 'Terminal', [page])
 
   useEffect(() => {
@@ -257,6 +300,22 @@ function App() {
       setShowLoginPopup(false) // Close login popup when authenticated
     }
   }, [authenticated, dummySolanaAccount])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mediaQuery = window.matchMedia('(max-width: 960px)')
+    const handleMediaChange = (event: MediaQueryListEvent | MediaQueryList) => {
+      const matches = 'matches' in event ? event.matches : mediaQuery.matches
+      setIsMobile(matches)
+      if (!matches) {
+        setIsSidebarOpen(false)
+      }
+    }
+
+    handleMediaChange(mediaQuery)
+    mediaQuery.addEventListener('change', handleMediaChange as (e: MediaQueryListEvent) => void)
+    return () => mediaQuery.removeEventListener('change', handleMediaChange as (e: MediaQueryListEvent) => void)
+  }, [])
 
   const openLoginPopup = () => {
     setShowLoginPopup(true)
@@ -269,10 +328,46 @@ function App() {
   const sendMessage = async (rawText: string) => {
     const text = rawText.trim()
     if (!text) return
-    if (!canChat) {
-      setChatInput(text)
+    
+    // Check if this is an automation request
+    const automation = parseAutomationPrompt(text)
+    
+    if (automation) {
+      // Show automation confirmation modal
+      setAutomationDetails(automation)
+      setShowAutomationModal(true)
+      
+      // Add user message and assistant response
+      const userMessage: ChatMessage = { role: 'user', content: text }
+      const assistantMessage: ChatMessage = {
+        role: 'assistant',
+        content: `Let's get started by validating the asset and setting up the automated task for you. First, I'll check the details for the ${automation.asset} token to ensure it's available for trading. Then, I'll proceed with setting up the automation. Let's go!`,
+      }
+      setChatMessages([...chatMessages, userMessage, assistantMessage])
+      setChatInput('')
       return
     }
+    
+    // Check for trending coins request
+    const lowerText = text.toLowerCase()
+    if (lowerText.includes('trending') && (lowerText.includes('coin') || lowerText.includes('coins'))) {
+      const { getTrendingCoins } = await import('./utils/dummyData')
+      const trendingCoins = getTrendingCoins()
+      
+      const userMessage: ChatMessage = { role: 'user', content: text }
+      const coinsList = trendingCoins.slice(0, 10).map((coin, idx) => 
+        `${idx + 1}. **${coin.name} (${coin.symbol})** - $${coin.price.toFixed(6)} | 24h: ${coin.change24h > 0 ? '+' : ''}${coin.change24h.toFixed(2)}% | Volume: $${(coin.volume24h / 1000).toFixed(0)}K`
+      ).join('\n')
+      
+      const assistantMessage: ChatMessage = {
+        role: 'assistant',
+        content: `Here are the trending coins from the last 24 hours:\n\n${coinsList}\n\n*Note: This is dummy data for demonstration purposes.*`,
+      }
+      setChatMessages([...chatMessages, userMessage, assistantMessage])
+      setChatInput('')
+      return
+    }
+    
     const userMessage: ChatMessage = { role: 'user', content: text }
     const nextMessages: ChatMessage[] = [...chatMessages, userMessage]
     setChatMessages(nextMessages)
@@ -280,14 +375,27 @@ function App() {
     setIsSending(true)
 
     try {
-      const reply = await sendChatMessage(nextMessages)
-      const aiMessage: ChatMessage = { role: 'assistant', content: reply }
-      setChatMessages([...nextMessages, aiMessage])
+      const result = await sendChatMessage(nextMessages, 'gpt-4o')
+      
+      if (result.error) {
+        const errorMessage: ChatMessage = {
+          role: 'assistant',
+          content: `I encountered an error: ${result.error}. Please check your API configuration and try again.`,
+        }
+        setChatMessages([...nextMessages, errorMessage])
+      } else {
+        const aiMessage: ChatMessage = { 
+          role: 'assistant', 
+          content: result.content || 'No response received.'
+        }
+        setChatMessages([...nextMessages, aiMessage])
+      }
     } catch (error) {
-      const fallback =
-        'I could not reach the Gemini API. Using a local mock response: automation is drafted, ready to review.'
-      const mockMessage: ChatMessage = { role: 'assistant', content: fallback }
-      setChatMessages([...nextMessages, mockMessage])
+      const errorMessage: ChatMessage = {
+        role: 'assistant',
+        content: `Unable to connect to the chat service. Error: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your connection and try again.`,
+      }
+      setChatMessages([...nextMessages, errorMessage])
     } finally {
       setIsSending(false)
     }
@@ -329,129 +437,118 @@ function App() {
   }
 
 
-  if (showLanding) {
-    return (
-      <div className="landing">
-        <div className="landing-nav">
-          <div className="brand">
-            <img src={brandLogo} alt="ApexFlow logo" className="brand-logo" />
-            <span className="brand-name">ApexFlow</span>
-          </div>
-        </div>
-        <div className="landing-hero">
-          <p className="eyebrow">Your autonomous trading assistant</p>
-          <h1 className="landing-title">Build, automate, and run strategies 24/7</h1>
-          <p className="landing-sub">
-            Set your strategies with natural language and let ApexFlow execute them continuously. Powered by AI guidance
-            and Solana speed, amplified by social discovery.
-          </p>
-          <div className="landing-actions">
-            <button className="primary large" onClick={() => setShowLanding(false)}>
-              Launch ApexFlow
-            </button>
-            <button className="ghost large">Buy $APEX</button>  
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="workspace-shell">
-      {/* Global profile icon — fixed to top-right */}
-      <div className="profile-fab desktop-only profile-icon-wrapper">
-        <button className="profile-icon-btn" onClick={handleProfileClick}>
-          <User size={20} />
-        </button>
-        {showProfilePopup && (
-          <ProfilePopup 
-            onClose={() => setShowProfilePopup(false)}
-            onNavigateToProfile={handleNavigateToProfile}
-            onNavigateToPricing={() => { setShowProfilePopup(false); setPage('pricing'); }}
-            onLogout={() => { setShowProfilePopup(false); logout(); }}
-            getDisplayAddress={getDisplayAddress}
-            handleCopyAddress={handleCopyAddress}
-          />
-        )}
-      </div>
-
-      {/* Mobile Sidebar Overlay */}
-      {isSidebarOpen && (
+      
+      {isMobile && isSidebarOpen && (
         <div 
           className="sidebar-overlay" 
           onClick={() => setIsSidebarOpen(false)}
           aria-label="Close sidebar"
         />
       )}
-      <aside className={`side-nav ${isSidebarOpen ? 'mobile-open' : ''}`}>
-        <div className="side-brand">
-          <img src={brandLogo} alt="ApexFlow" className="side-logo" />
-          <div>
-            <div onClick={() => setShowLanding(true)} className="side-title">ApexFlow</div>
-            <div className="side-version">v1.0</div>
-          </div>
-          <button 
-            className="sidebar-close-btn"
-            onClick={() => setIsSidebarOpen(false)}
-            aria-label="Close sidebar"
-          >
-            <X size={18} />
-          </button>
-        </div>
-        <div className="side-group">
-          <p className="side-label">Workspace</p>
-          {navLinks.map((link) => (
-            <button
-              key={link.key}
-              className={`side-link ${page === link.key ? 'active' : ''}`}
-              onClick={() => {
-                setPage(link.key)
-                setIsSidebarOpen(false)
-              }}
-            >
-              {link.label}
-            </button>
-          ))}
-        </div>
-        <div className="side-group">
-          <p className="side-label">
-            Social Trading <span className="pill pill-soon">Soon</span>
-          </p>
-          <button className="side-link" disabled>
-            Discover
-          </button>
-          <button className="side-link" disabled>
-            Marketplace
-          </button>
-        </div>
-        <div className="side-group side-auth-group">
-          <p className="side-label">Connect & Login</p>
-          <div className="side-auth-buttons">
-            <WalletMultiButton className="wallet-btn side-wallet-btn" />
-            {!authenticated && (
-              <button className="primary side-login-btn" onClick={openLoginPopup}>
-                Login
-              </button>
-            )}
+      {(!isMobile || isSidebarOpen) && (
+        <aside className={`side-nav ${isSidebarOpen ? 'mobile-open' : ''}`}>
+          <div className="side-brand">
+            <img src={brandLogo} alt="ApexFlow" className="side-logo" />
+            <div>
+              <div onClick={() => setPage('terminal')} className="side-title">ApexFlow</div>
+              <div className="side-version">v1.0</div>
+            </div>
             <button 
-              className="ghost side-docs-btn" 
-              onClick={() => window.open('https://docs.apexflow.io', '_blank')}
+              className="sidebar-close-btn"
+              onClick={() => setIsSidebarOpen(false)}
+              aria-label="Close sidebar"
             >
-              Docs
+              <X size={18} />
             </button>
           </div>
-        </div>
-        <div className="side-footer">
-          <div className="social-links">
-            <a href="https://x.com/ApexFlow" target="_blank" rel="noopener noreferrer">
-              <X size={18} />
-            </a>
-            <a href="https://t.me/ApexFlow" target="_blank" rel="noopener noreferrer">
-              <FaTelegramPlane size={18} />
-            </a>
+          <div className="side-group">
+            <p className="side-label">Workspace</p>
+            {navLinks.map((link) => (
+              <button
+                key={link.key}
+                className={`side-link ${page === link.key ? 'active' : ''}`}
+                onClick={() => {
+                  setPage(link.key)
+                  setIsSidebarOpen(false)
+                }}
+              >
+                <span className="side-link-content">
+                  <span>{link.label}</span>
+                  {link.key === 'metrics' && (
+                    <span className="side-link-badge">
+                      <Flame size={14} />
+                      <span style={{ fontSize: '11px' }}>New</span>
+                    </span>
+                  )}
+                </span>
+              </button>
+            ))}
           </div>
-        </div>
-      </aside>
+          <div className="side-group">
+            <p className="side-label">
+              Social Trading <span style={{ width: '90px', height: '22px', fontSize: '10px' }} className="pill pill-soon">Coming Soon</span>
+            </p>
+            <button style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className="side-link" disabled>
+              <Compass size={16} />
+              <span>Discover</span>
+            </button>
+            <button style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className="side-link" disabled>
+              <Users size={16} />
+              <span>Activity</span>
+            </button>
+            
+            <button style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className="side-link" disabled>
+              <Trophy size={16} />
+              <span>Leaderboard</span>
+            </button>
+          </div>
+          <div className="side-group side-auth-group">
+            <p style={{ fontSize: '13px', marginBottom: '10px' }} className="side-label community-help-text">Need help? Join our community</p>
+            <div className="community-links">
+              <a
+                className="community-link community-link-x"
+                href="https://x.com/ApexFlow"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="X"
+              >
+                <X size={18} />
+              </a>
+              <a
+                className="community-link community-link-telegram"
+                href="https://t.me/ApexFlow"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Telegram"
+              >
+                <FaTelegramPlane size={18} />
+              </a>
+              <a
+                className="community-link community-link-dex"
+                href="https://dexscreener.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Dex Screener"
+              >
+                <img src="https://dexscreener.com/favicon.png" alt="Dex Screener" />
+              </a>
+              <a
+                className="community-link community-link-gitbook"
+                href="https://docs.apexflow.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Gitbook"
+              >
+                <img src="/gitbook.png" alt="Gitbook" />
+              </a>
+            </div>
+          </div>
+
+        </aside>
+      )}
 
       <div className="workspace-main">
         {/* Mobile Header */}
@@ -471,6 +568,12 @@ function App() {
             <span className="mobile-credits-text">811 credits</span>
           </div>
           <div className="mobile-header-right">
+            <button className="mobile-earn-btn" onClick={() => window.open('https://apexflow.io/earn', '_blank')}>
+              <Gift size={16} />
+            </button>
+            <button className="mobile-login-btn" onClick={openLoginPopup}>
+              Login
+            </button>
             <div className="profile-icon-wrapper">
               <button className="profile-icon-btn" onClick={handleProfileClick}>
                 <User size={18} />
@@ -489,37 +592,62 @@ function App() {
           </div>
         </header>
 
-        {/* Mobile Actions - Wallet Connect, Login, Docs */}
-        <div className="mobile-actions">
-          <div className="mobile-actions-row">
-            <WalletMultiButton className="wallet-btn mobile-wallet-btn" />
-            {!authenticated && (
-              <button className="primary mobile-login-btn" onClick={openLoginPopup}>
-                Login
-              </button>
-            )}
-          </div>
-          <button 
-            className="ghost mobile-docs-btn" 
-            onClick={() => window.open('https://docs.apexflow.io', '_blank')}
-          >
-            Docs
-          </button>
-        </div>
-
-        {/* Desktop Header */}
-        <header className="workspace-header desktop-only">
-          <div className="crumb">
-            <span className="dot" /> {activePageLabel}
-          </div>
-          <div className="header-actions" />
-        </header>
 
 
         {page === 'terminal' && (
           <div className="chat-shell">
-            {/* Mobile Hero Section - shows when no messages or initial state */}
+            <div className="terminal-header-bar desktop-only">
+              <div className="terminal-header-right">
+                <button className="terminal-earn-btn" onClick={() => window.open('https://apexflow.io/earn', '_blank')}>
+                  <Gift size={16} />
+                  Earn $30
+                </button>
+                <button className="terminal-login-btn" onClick={openLoginPopup}>
+                  Login
+                </button>
+                <div className="profile-icon-wrapper">
+                  <button className="profile-icon-btn" onClick={handleProfileClick}>
+                    <User size={18} />
+                  </button>
+                  {showProfilePopup && (
+                    <ProfilePopup 
+                      onClose={() => setShowProfilePopup(false)}
+                      onNavigateToProfile={handleNavigateToProfile}
+                      onNavigateToPricing={() => { setShowProfilePopup(false); setPage('pricing'); }}
+                      onLogout={() => { setShowProfilePopup(false); logout(); }}
+                      getDisplayAddress={getDisplayAddress}
+                      handleCopyAddress={handleCopyAddress}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+
             {chatMessages.length <= 1 && (
+              <div className="terminal-main-content desktop-only">
+                <div className="terminal-hero-container">
+                  <img src="/Logo.png" alt="ApexFlow" style={{ width: '125px', height: '100px' }} className="terminal-hero-image" />
+                  <div className="terminal-hero-content">
+                    <h1 className="terminal-main-title">Automate your trading strategies with your own AI Agent</h1>
+                    <p className="terminal-main-subtitle">Just ask APEX to do anything, like:</p>
+                    <div className="terminal-prompts-list">
+                      {heroPrompts.map(({ text }) => (
+                        <button key={text} className="terminal-prompt-item" onClick={() => handlePromptClick(text)}>
+                          <span className="terminal-prompt-prefix">&gt;_</span>
+                          <span className="terminal-prompt-text">{text}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <button className="terminal-create-automation-btn" onClick={() => handlePromptClick(heroPrompts[0].text)}>
+                      <Zap size={20} />
+                      Create Automation
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+                        {chatMessages.length <= 1 && (
               <div className="mobile-hero">
                 <div className="mobile-hero-brand">
                   <img src={brandLogo} alt="ApexFlow" className="mobile-logo" />
@@ -536,30 +664,10 @@ function App() {
                     </button>
                   ))}
                 </div>
-                <button className="mobile-cta primary large" onClick={() => canChat && handlePromptClick(heroPrompts[0].text)}>
+                <button className="mobile-cta primary large" onClick={() => handlePromptClick(heroPrompts[0].text)}>
                   <Zap size={20} />
                   Create Automation
                 </button>
-                {/* <div className="mobile-hero-chat-input">
-                  <div className="chat-input-bar-input">
-                    <textarea
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.currentTarget.value)}
-                      placeholder={canChat ? 'What I can do for you today...?' : 'Login or connect wallet to start chatting...'}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault()
-                          handleSend()
-                        }
-                      }}
-                      disabled={isSending || !canChat}
-                      rows={1}
-                    />
-                  </div>
-                  <button className="mobile-send-btn" onClick={handleSend} disabled={isSending || !canChat}>
-                    <ArrowUp size={18} />
-                  </button>
-                </div> */}
                 <div className="powered-by">
                   <div className="powered-by-icons">
                     <div className="powered-icon" />
@@ -573,31 +681,15 @@ function App() {
               </div>
             )}
 
-            {/* Desktop Chat Header - Hide when chat is active */}
-            {chatMessages.length <= 1 && (
-              <div className="chat-header desktop-only">
-                <div>
-                  <p className="side-label">ApexFlow Chat</p>
-                  <p className="chat-title">Chat with your trading agent</p>
-                  <p className="muted">Natural language to automations, insights, and Solana-ready tasks.</p>
-                </div>
-                <div className="chat-status">
-                  <span className={`status-dot ${canChat ? 'online' : ''}`} />
-                  <span>{canChat ? 'Ready' : 'Connect wallet or email to chat'}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Chat Window - only show if messages exist */}
             {chatMessages.length > 1 && (
               <div className="chat-window">
                 {chatMessages.map((message, idx) => (
                 <div key={idx} className={`chat-message ${message.role}`}>
-                  <div className="chat-avatar">{message.role === 'assistant' ? 'A' : 'You'.slice(0, 1)}</div>
+                  <div className="chat-avatar">{message.role === 'assistant' ? 'A' : 'U'}</div>
                   <div className="chat-bubble-body">
                     <div className="chat-meta">
-                      <span className="chat-name">{message.role === 'assistant' ? 'Apex' : 'You'}</span>
-                      <span className="chat-role-label">{message.role === 'assistant' ? 'Assistant' : 'User'}</span>
+                      <span className="chat-name">{message.role === 'assistant' ? 'Apex Assistant' : 'You'}</span>
+                      <span className="chat-role-label">{message.role === 'assistant' ? 'ApexFlow' : 'User'}</span>
                     </div>
                     <p className="chat-text">{message.content}</p>
                   </div>
@@ -607,7 +699,10 @@ function App() {
                 <div className="chat-message assistant">
                   <div className="chat-avatar">A</div>
                   <div className="chat-bubble-body typing">
-                    <span className="chat-name">Apex</span>
+                    <div className="chat-meta">
+                      <span className="chat-name">Apex Assistant</span>
+                      <span className="chat-role-label">ApexFlow</span>
+                    </div>
                     <div className="dot-bounce">
                       <span />
                       <span />
@@ -619,51 +714,30 @@ function App() {
               </div>
             )}
 
-            {chatMessages.length <= 1 && (
-              <div className="prompt-suggestions desktop-only">
-                {heroPrompts.map(({ text }) => (
-                  <button key={text} className="prompt-chip" onClick={() => handlePromptClick(text)}>
-                    {text.replace(/"/g, '')}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {!canChat && (
-              <div className="chat-guard inline desktop-only">
-                <div>
-                  <p className="muted">Login or connect your wallet to chat with ApexFlow.</p>
-                  <p className="muted">We only use this to personalize responses.</p>
-                </div>
-                <div className="guard-actions">
-                  <button className="primary" onClick={openLoginPopup}>
-                    Login with Email
-                  </button>
-                  <WalletMultiButton className="wallet-btn" />
-                </div>
-              </div>
-            )}
-
-            <div className="desktop-chat-input desktop-only">
-              <div className="desktop-chat-input-wrapper">
+            <div className="terminal-input-area desktop-only">
+              <div className="terminal-input-wrapper">
+                <button className="terminal-automations-btn" onClick={() => setPage('automations')}>
+                  <Zap size={16} />
+                  Automations
+                </button>
                 <textarea
-                  className="desktop-chat-textarea"
+                  className="terminal-input"
                   value={chatInput}
                   onChange={(e) => setChatInput(e.currentTarget.value)}
-                  placeholder={canChat ? 'What I can do for you today...?' : 'Login or connect wallet to start chatting...'}
+                  placeholder="What I can do for you today...?"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault()
                       handleSend()
                     }
                   }}
-                  disabled={isSending || !canChat}
-                  rows={2}
+                  disabled={isSending}
+                  rows={1}
                 />
                 <button 
-                  className="desktop-chat-send-btn" 
+                  className="terminal-send-btn" 
                   onClick={handleSend} 
-                  disabled={isSending || !canChat}
+                  disabled={isSending}
                 >
                   <ArrowUp size={18} />
                 </button>
@@ -674,28 +748,33 @@ function App() {
 
         {page === 'pricing' && <PricingPage />}
         {page === 'metrics' && <MetricsPage />}
+        {page === 'automations' && <AutomationsPage onNavigate={setPage} />}
         {page === 'profile' && <ProfilePage onNavigate={setPage} onLogout={logout} getDisplayAddress={getDisplayAddress} authenticated={authenticated} />}
 
         <div className="chat-input-bar mobile-input">
+          <button className="mobile-input-action" onClick={() => setPage('automations')}>
+            <Zap size={16} />
+            Automations
+          </button>
           <div className="chat-input-bar-input">
             <textarea
               value={chatInput}
               onChange={(e) => setChatInput(e.currentTarget.value)}
-              placeholder={canChat ? 'What I can do for you today...?' : 'Login or connect wallet to start chatting...'}
+              placeholder={isLoggedIn ? 'What I can do for you today...?' : 'You can chat now — connect to save & personalize.'}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault()
                   handleSend()
                 }
               }}
-              disabled={isSending || !canChat}
+              disabled={isSending}
               rows={1}
             />
           </div>
           <button 
             className="mobile-send-btn" 
             onClick={handleSend} 
-            disabled={isSending || !canChat}
+            disabled={isSending}
           >
             <ArrowUp size={18} />
           </button>
@@ -704,6 +783,26 @@ function App() {
         {/* Login Popup Modal */}
         {showLoginPopup && (
           <LoginPopup onClose={closeLoginPopup} />
+        )}
+
+        {/* Automation Confirmation Modal */}
+        {showAutomationModal && automationDetails && (
+          <ConfirmAutomationModal
+            details={automationDetails}
+            onClose={() => {
+              setShowAutomationModal(false)
+              setAutomationDetails(null)
+            }}
+            onConfirm={() => {
+              const confirmMessage: ChatMessage = {
+                role: 'assistant',
+                content: `Automation confirmed! Your task "${automationDetails.summary}" has been set up and will run every ${automationDetails.frequency}. You'll be notified when it executes.`,
+              }
+              setChatMessages([...chatMessages, confirmMessage])
+              setShowAutomationModal(false)
+              setAutomationDetails(null)
+            }}
+          />
         )}
       </div>
     </div>
@@ -755,7 +854,7 @@ function ProfilePopup({
           </div>
 
           <div className="profile-popup-apex-row">
-            <span className="profile-popup-apex-label" style={{ fontWeight: 'bold'  ,fontSize: '14px', color: '#fff'}}>ApexFlow Balance: </span>
+            <span className="profile-popup-apex-label">ApexFlow Balance</span>
             <span className="profile-popup-apex-value">0.00</span>
           </div>
         </div>
@@ -803,9 +902,14 @@ function PricingPage() {
 
       <div className="pricing-grid">
         {pricingPlans.map((plan) => (
-          <div key={plan.name} className={`pricing-card ${plan.name === 'Expert' ? 'featured' : ''}`}>
+          <div key={plan.name} className={`pricing-card ${plan.name === 'Expert' ? 'featured' : ''} ${plan.name !== 'Starter' ? 'coming-soon-card' : ''}`}>
             {plan.badge && plan.name === 'Expert' && (
               <span className="pricing-badge">Most popular</span>
+            )}
+            {plan.name !== 'Starter' && (
+              <div className="coming-soon-overlay">
+                <span className="coming-soon-text">Live Soon</span>
+              </div>
             )}
             <div className="pricing-card-header">
               <h3 className="plan-name">{plan.name}</h3>
@@ -951,14 +1055,204 @@ function ProfilePage({ onNavigate, onLogout, getDisplayAddress, authenticated }:
   )
 }
 
+type Automation = {
+  id: string
+  name: string
+  description: string
+  status: 'active' | 'paused' | 'completed'
+  type: 'scheduled' | 'execution'
+  nextRun?: string
+  lastRun?: string
+  executions?: number
+  successRate?: number
+}
+
+function AutomationsPage({ onNavigate }: { onNavigate: (page: Page) => void }) {
+  const [activeTab, setActiveTab] = useState<'scheduled' | 'executions'>('scheduled')
+  const [automations, setAutomations] = useState<Automation[]>([])
+  
+  useEffect(() => {
+    const sampleAutomations: Automation[] = [
+      {
+        id: '1',
+        name: 'DCA APEX Purchase',
+        description: 'Automate DCA $50 of APEX every day. Stop after spending $1000',
+        status: 'active',
+        type: 'scheduled',
+        nextRun: 'Tomorrow at 9:00 AM',
+        lastRun: 'Today at 9:00 AM',
+        executions: 12,
+        successRate: 100
+      },
+      {
+        id: '2',
+        name: 'RSI Buy Signal',
+        description: 'If 15min RSI on FACY is below 30, buy it. Sell 50% when 10x from first buy',
+        status: 'active',
+        type: 'scheduled',
+        nextRun: 'In 15 minutes',
+        lastRun: '2 hours ago',
+        executions: 8,
+        successRate: 87.5
+      },
+      {
+        id: '3',
+        name: 'Price Drop Alert',
+        description: 'Check every 4 hours if WIRE is down at least 10% last day, then buy $500',
+        status: 'paused',
+        type: 'scheduled',
+        nextRun: 'Paused',
+        lastRun: 'Yesterday at 2:00 PM',
+        executions: 3,
+        successRate: 66.7
+      },
+      {
+        id: '4',
+        name: 'Trending Coins Fetch',
+        description: 'Give me trending coins last 24h from Coingecko',
+        status: 'active',
+        type: 'execution',
+        lastRun: '1 hour ago',
+        executions: 24,
+        successRate: 95.8
+      }
+    ]
+    setAutomations(sampleAutomations)
+  }, [])
+
+  const scheduledAutomations = automations.filter(a => a.type === 'scheduled')
+  const executionAutomations = automations.filter(a => a.type === 'execution')
+
+  const handleCreateAutomation = () => {
+    onNavigate('terminal')
+  }
+
+  const handleToggleAutomation = (id: string) => {
+    setAutomations(prev => prev.map(automation => 
+      automation.id === id 
+        ? { ...automation, status: automation.status === 'active' ? 'paused' : 'active' }
+        : automation
+    ))
+  }
+
+  const handleDeleteAutomation = (id: string) => {
+    setAutomations(prev => prev.filter(automation => automation.id !== id))
+  }
+
+  const currentAutomations = activeTab === 'scheduled' ? scheduledAutomations : executionAutomations
+
+  return (
+    <div className="automations-page">
+      <div className="automations-header">
+        <div>
+          <h2 className="page-title">Automations</h2>
+        </div>
+        <button className="primary" onClick={handleCreateAutomation}>
+          <Plus size={16} />
+          Create Automation
+        </button>
+      </div>
+
+      <div className="automations-tabs">
+        <button 
+          className={`automation-tab ${activeTab === 'scheduled' ? 'active' : ''}`}
+          onClick={() => setActiveTab('scheduled')}
+        >
+          <Clock size={16} />
+          Scheduled
+        </button>
+        <button 
+          className={`automation-tab ${activeTab === 'executions' ? 'active' : ''}`}
+          onClick={() => setActiveTab('executions')}
+        >
+          <BarChart3 size={16} />
+          Executions
+        </button>
+      </div>
+
+      {currentAutomations.length === 0 ? (
+        <div className="automations-empty-state">
+          <div className="empty-state-icon">
+            <Zap size={48} />
+          </div>
+          <h3 className="empty-state-title">No automations found</h3>
+          <p className="empty-state-subtitle">Create your first automation!</p>
+          <button className="primary large" onClick={handleCreateAutomation}>
+            <Plus size={20} />
+            Create Automation
+          </button>
+        </div>
+      ) : (
+        <div className="automations-grid">
+          {currentAutomations.map((automation) => (
+            <div key={automation.id} className="automation-card">
+              <div className="automation-card-header">
+                <div className="automation-card-title-section">
+                  <h3 className="automation-card-title">{automation.name}</h3>
+                  <span className={`automation-status automation-status-${automation.status}`}>
+                    {automation.status === 'active' ? 'Active' : automation.status === 'paused' ? 'Paused' : 'Completed'}
+                  </span>
+                </div>
+                <div className="automation-card-actions">
+                  <button 
+                    className="automation-action-btn"
+                    onClick={() => handleToggleAutomation(automation.id)}
+                    title={automation.status === 'active' ? 'Pause' : 'Resume'}
+                  >
+                    {automation.status === 'active' ? <PauseCircle size={18} /> : <PlayCircle size={18} />}
+                  </button>
+                  <button 
+                    className="automation-action-btn"
+                    onClick={() => handleDeleteAutomation(automation.id)}
+                    title="Delete"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </div>
+              <p className="automation-card-description">{automation.description}</p>
+              <div className="automation-card-details">
+                {automation.nextRun && (
+                  <div className="automation-detail-item">
+                    <Clock size={14} />
+                    <span>Next: {automation.nextRun}</span>
+                  </div>
+                )}
+                {automation.lastRun && (
+                  <div className="automation-detail-item">
+                    <PlayCircle size={14} />
+                    <span>Last: {automation.lastRun}</span>
+                  </div>
+                )}
+                {automation.executions !== undefined && (
+                  <div className="automation-detail-item">
+                    <BarChart3 size={14} />
+                    <span>{automation.executions} executions</span>
+                  </div>
+                )}
+                {automation.successRate !== undefined && (
+                  <div className="automation-detail-item">
+                    <TrendingUp size={14} />
+                    <span>{automation.successRate}% success</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function MetricsPage() {
   return (
     <div className="metrics-page">
       <div className="page-head">
         <div>
-          <p className="side-label">Metrics Overview</p>
-          <h2 className="page-title">Strategy performance and platform health</h2>
-          <p className="page-sub">Track volume, reliability, adoption, and automation success in one place.</p>
+          <p className="side-label">Analytics Dashboard</p>
+          <h2 className="page-title">Platform Metrics</h2>
+          <p className="muted">Real-time insights and performance data</p>
         </div>
         <div className="page-actions">
           <button className="ghost">
@@ -975,7 +1269,10 @@ function MetricsPage() {
           <div key={metric.label} className="metric-tile">
             <p className="metric-label">{metric.label}</p>
             <p className="metric-value">{metric.value}</p>
-            <p className={`metric-trend ${metric.change.startsWith('-') ? 'neg' : 'pos'}`}>{metric.change}</p>
+            <p className={`metric-trend ${metric.change.startsWith('-') ? 'neg' : 'pos'}`}>
+              <TrendingUp size={14} style={{ marginRight: '4px' }} />
+              {metric.change}
+            </p>
           </div>
         ))}
       </div>
@@ -984,40 +1281,23 @@ function MetricsPage() {
         <div className="metric-panel">
           <div className="panel-head">
             <div>
-              <p className="side-label">Execution Reliability</p>
-              <p className="panel-title">Tasks executed on time</p>
+              <p className="side-label">Monthly Volume Trend</p>
+              <p className="panel-title">Trading volume over time</p>
             </div>
             <span className="pill pill-live">Live</span>
           </div>
-          <div className="bar-rows">
-            {['Automations', 'Copy Trades', 'Alerts', 'On-chain Actions'].map((label, idx) => (
-              <div key={label} className="bar-row">
-                <span>{label}</span>
-                <div className="bar-track">
-                  <div className="bar-fill" style={{ width: `${85 - idx * 6}%` }} />
-                </div>
-                <span className="bar-value">{85 - idx * 6}%</span>
-              </div>
-            ))}
-          </div>
+          <VolumeChart />
         </div>
 
         <div className="metric-panel">
           <div className="panel-head">
             <div>
-              <p className="side-label">User Growth</p>
-              <p className="panel-title">New traders & stakers</p>
+              <p className="side-label">Strategies Growth</p>
+              <p className="panel-title">Active strategies deployed</p>
             </div>
             <span className="pill">Weekly</span>
           </div>
-          <div className="trend-grid">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => (
-              <div key={day} className="spark">
-                <div className="spark-bar" style={{ height: `${40 + idx * 6}px` }} />
-                <span className="spark-label">{day}</span>
-              </div>
-            ))}
-          </div>
+          <StrategiesChart />
         </div>
       </div>
 
@@ -1025,71 +1305,111 @@ function MetricsPage() {
         <div className="metric-panel">
           <div className="panel-head">
             <div>
-              <p className="side-label">Trending Pools</p>
-              <p className="panel-title">Volume leaders</p>
+              <p className="side-label">Average Latency</p>
+              <p className="panel-title">Response time monitoring</p>
             </div>
+            <span className="pill">24h</span>
           </div>
-          <div className="trending-list">
-            {trendingPools.map((pool) => (
-              <div key={pool.pair} className="trending-row">
-                <div className="pair-meta">
-                  <span className="rank">{pool.rank}</span>
-                  <div>
-                    <p className="pair-title">
-                      {pool.pair} {pool.tag}
-                    </p>
-                    <p className="muted">Price {pool.price}</p>
-                  </div>
-                </div>
-                <div className="mini-metrics">
-                  <div>
-                    <p className="muted">Volume</p>
-                    <p className="value">{pool.volume}</p>
-                  </div>
-                  <div>
-                    <p className="muted">Liquidity</p>
-                    <p className="value">{pool.liquidity}</p>
-                  </div>
-                  <div>
-                    <p className="muted">FDV</p>
-                    <p className="value">{pool.fdv}</p>
-                  </div>
-                  <div className="change-grid">
-                    {Object.entries(pool.changes).map(([label, change]) => (
-                      <span key={label} className={change.startsWith('-') ? 'neg' : 'pos'}>
-                        {label} {change}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <LatencyChart />
         </div>
+
         <div className="metric-panel">
           <div className="panel-head">
             <div>
-              <p className="side-label">Breakdown</p>
-              <p className="panel-title">Performance snapshots</p>
+              <p className="side-label">Success Rate</p>
+              <p className="panel-title">Execution success rate</p>
             </div>
+            <span className="pill pill-live">Live</span>
           </div>
-          <div className="breakdown-list">
-            {trendingBreakdown.map((item) => (
-              <div key={item.title} className="breakdown-item glass">
-                <p className="pair-title">{item.title}</p>
-                <ul>
-                  {item.items.map((entry) => (
-                    <li key={entry} className="muted">
-                      {entry}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+          <SuccessRateChart />
         </div>
       </div>
+
+      <div className="metric-panels">
+        <div className="metric-panel">
+          <div className="panel-head">
+            <div>
+              <p className="side-label">TVL Growth</p>
+              <p className="panel-title">Total Value Locked progression</p>
+            </div>
+            <span className="pill">Monthly</span>
+          </div>
+          <TVLChart />
+        </div>
+
+        <div className="metric-panel">
+          <div className="panel-head">
+            <div>
+              <p className="side-label">Copy Traders</p>
+              <p className="panel-title">Active copy trading users</p>
+            </div>
+            <span className="pill">Weekly</span>
+          </div>
+          <CopyTradersChart />
+        </div>
+      </div>
+
     </div>
+  )
+}
+
+function ConfirmAutomationModal({ 
+  details, 
+  onClose, 
+  onConfirm 
+}: { 
+  details: AutomationDetails
+  onClose: () => void
+  onConfirm: () => void
+}) {
+  return (
+    <>
+      <div className="automation-modal-overlay" onClick={onClose} />
+      <div className="automation-modal">
+        <h2 className="automation-modal-title">Confirm Automation</h2>
+        
+        <div className="automation-modal-content">
+          <div className="automation-detail-row">
+            <span className="automation-detail-label">Summary</span>
+            <span className="automation-detail-value">{details.summary}</span>
+          </div>
+          
+          <div className="automation-detail-row">
+            <span className="automation-detail-label">Frequency</span>
+            <span className="automation-detail-value">{details.frequency}</span>
+          </div>
+          
+          <div className="automation-detail-row">
+            <span className="automation-detail-label">Base Currency</span>
+            <span className="automation-detail-value">{details.baseCurrency}</span>
+          </div>
+          
+          <div className="automation-detail-row">
+            <span className="automation-detail-label">Asset</span>
+            <span className="automation-detail-value">{details.assetAddress || details.asset}</span>
+          </div>
+          
+          <div className="automation-detail-row">
+            <span className="automation-detail-label">Cost</span>
+            <span className="automation-detail-value automation-cost">
+              {details.cost} Credits / Execution
+              <Link2 size={14} style={{ marginLeft: '6px', opacity: 0.7 }} />
+            </span>
+          </div>
+        </div>
+        
+        <div className="automation-modal-actions">
+          <button className="automation-modal-cancel" onClick={onClose}>
+            <X size={18} />
+            Cancel
+          </button>
+          <button className="automation-modal-confirm" onClick={onConfirm}>
+            <Check size={18} />
+            Confirm & Execute
+          </button>
+        </div>
+      </div>
+    </>
   )
 }
 
