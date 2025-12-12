@@ -9,14 +9,16 @@ export interface ChatResponse {
   model?: string
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://apexflow-token.onrender.com'
+// Use local proxy by default (goes through vite proxy to local server, which then calls apexflow-token)
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+const API_URL = API_BASE_URL ? `${API_BASE_URL}/api/chat` : '/api/chat'
 
 export async function sendChatMessage(
   messages: ChatMessage[],
   model: string = 'gpt-4o'
 ): Promise<ChatResponse> {
   try {
-    const response = await fetch(`${API_URL}/api/chat`, {
+    const response = await fetch(API_URL, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',

@@ -15,7 +15,10 @@ type ChatMessage = {
 }
 
 async function sendChatMessage(messages: ChatMessage[], model: string = 'gpt-4o'): Promise<{ content?: string; error?: string }> {
-  const API_URL = import.meta.env.VITE_API_URL || 'https://apexflow-token.onrender.com/api/chat'
+  // On Vercel there is no local /api proxy, so default to the hosted chat API in production
+  const API_URL =
+    import.meta.env.VITE_API_URL ||
+    (import.meta.env.PROD ? 'https://apexflow-token.onrender.com/api/chat' : '/api/chat')
   
   try {
     const response = await fetch(API_URL, {
@@ -306,13 +309,13 @@ function App() {
       const trendingCoins = getTrendingCoins()
       
       const userMessage: ChatMessage = { role: 'user', content: text }
-      const coinsList = trendingCoins.slice(0, 10).map((coin, idx) => 
-        `${idx + 1}. **${coin.name} (${coin.symbol})** - $${coin.price.toFixed(6)} | 24h: ${coin.change24h > 0 ? '+' : ''}${coin.change24h.toFixed(2)}% | Volume: $${(coin.volume24h / 1000).toFixed(0)}K`
+      const coinsList = trendingCoins.slice(0, 10).map((coin, idx)=> 
+        `${idx + 1}. ${coin.name} (${coin.symbol}) - $${coin.price.toFixed(6)} | 24h: ${coin.change24h > 0 ? '+' : ''}${coin.change24h.toFixed(2)}% | Volume: $${(coin.volume24h / 1000).toFixed(0)}K`
       ).join('\n')
       
       const assistantMessage: ChatMessage = {
         role: 'assistant',
-        content: `Here are the trending coins from the last 24 hours:\n\n${coinsList}\n\n*Note: This is dummy data for demonstration purposes.*`,
+        content: `Here are the trending coins from the last 24 hours:\n\n${coinsList}\n\n`,
       }
       setChatMessages([...chatMessages, userMessage, assistantMessage])
       setChatInput('')

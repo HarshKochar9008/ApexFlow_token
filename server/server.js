@@ -74,9 +74,19 @@ app.post('/api/chat', async (req, res) => {
     res.json(data)
   } catch (err) {
     console.error('[server] Chat request failed', err)
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error'
+    
+    // Check for common network errors
+    if (errorMessage.includes('fetch failed') || errorMessage.includes('ECONNREFUSED') || errorMessage.includes('ENOTFOUND')) {
+      return res.status(503).json({ 
+        error: 'Unable to connect to chat service', 
+        detail: `Failed to reach ${CHAT_API_URL}. Please check if the service is available.`
+      })
+    }
+    
     res.status(500).json({ 
       error: 'Chat request failed', 
-      detail: err instanceof Error ? err.message : 'Unknown error'
+      detail: errorMessage
     })
   }
 })
