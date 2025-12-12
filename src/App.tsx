@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import { Zap, Rocket, Shield, BotMessageSquare, ArrowUp, ArrowRightLeft, BarChart3, LineChart, Menu, X, User, Settings, LogOut, Wallet, Crown, ArrowUpRight, Copy, Trophy, Compass, Users, Flame, Gift, TrendingUp, Plus, Clock, PlayCircle, PauseCircle, Trash2, Check, Link2 } from 'lucide-react'
 const brandLogo = '/Logo.png'
@@ -167,54 +167,6 @@ type PricingPlan = {
 
 type MetricCard = { label: string; value: string; change: string }
 
-const trendingPools = [
-  {
-    rank: 1,
-    pair: 'BEAST/WETH',
-    price: '$0.633382',
-    volume: '$2.84M',
-    liquidity: '$429.75K',
-    fdv: '$6.34M',
-    changes: { '5m': '-4.13%', '1h': '+67.23%', '6h': '+188.77%', '24h': '+2419.37%' },
-    tag: '🔥',
-  },
-  {
-    rank: 2,
-    pair: 'PRXVT/VRTUAL',
-    price: '$0.007335',
-    volume: '$844.89K',
-    liquidity: '$405.55K',
-    fdv: '$7.34M',
-    changes: { '5m': '+0.00%', '1h': '-2.96%', '6h': '-1.52%', '24h': '-1.20%' },
-    tag: '🔥',
-  },
-  {
-    rank: 3,
-    pair: 'BGLD/WETH',
-    price: '$0.000225',
-    volume: '$81.53K',
-    liquidity: '$49.51K',
-    fdv: '$212.28K',
-    changes: { '5m': '+0.00%', '1h': '-9.10%', '6h': '+24.72%', '24h': '+104.05%' },
-    tag: '🔥',
-  },
-] as const
-
-const trendingBreakdown = [
-  {
-    title: 'BEAST / WETH',
-    items: ['Price Change: +2419.37%', 'Volume: $2,836,236.69', 'Image'],
-  },
-  {
-    title: 'PRXVT / VIRTUAL',
-    items: ['Price Change: -1.20%', 'Volume: $844,887.84', 'Image'],
-  },
-  {
-    title: 'BGLD / WETH 1h',
-    items: ['Price Change: +104.05%', 'Volume: $81,528.89', 'Image'],
-  },
-] as const
-
 const pricingPlans: PricingPlan[] = [
   {
     name: 'Starter',
@@ -291,7 +243,6 @@ function App() {
   const [automationDetails, setAutomationDetails] = useState<AutomationDetails | null>(null)
   const [showAutomationModal, setShowAutomationModal] = useState(false)
   const isLoggedIn = connected || authenticated
-  const activePageLabel = useMemo(() => navLinks.find((n) => n.key === page)?.label ?? 'Terminal', [page])
 
   useEffect(() => {
     if (authenticated && !dummySolanaAccount) {

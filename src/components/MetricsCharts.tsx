@@ -1,4 +1,4 @@
-import { AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 const volumeData = [
   { month: 'Jun', volume: 5.2 },
@@ -181,4 +181,6 @@ export function CopyTradersChart() {
     </div>
   )
 }
+
+
 
