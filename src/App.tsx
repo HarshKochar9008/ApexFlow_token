@@ -1503,7 +1503,7 @@ function ReferEarnPage() {
             </div>
             <div className="refer-earn-metric">
               <span className="refer-earn-metric-value">{feesEarned}</span>
-              <span className="refer-earn-metric-label">Fees ($ETHY)</span>
+              <span className="refer-earn-metric-label">Fees ($Apexflow)</span>
             </div>
           </div>
         </div>
@@ -1892,7 +1892,7 @@ function MarketplacePage() {
       type: 'plugin',
       icon: '/tradingview.png',
       categories: ['Trading'],
-      description: 'TradingView plugin brings real-time charts and technical analysis directly into your Ethy Terminal. Your agent can visualize its strategies, confirm signals, and plot buy/sell levels directly on live charts — blending AI-driven insights with professional-grade visual tools for smarter execution.',
+      description: 'TradingView plugin brings real-time charts and technical analysis directly into your Apexflow Terminal. Your agent can visualize its strategies, confirm signals, and plot buy/sell levels directly on live charts — blending AI-driven insights with professional-grade visual tools for smarter execution.',
       status: 'coming-soon'
     },
     {
