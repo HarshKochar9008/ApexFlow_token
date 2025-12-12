@@ -15,7 +15,7 @@ type ChatMessage = {
 }
 
 async function sendChatMessage(messages: ChatMessage[], model: string = 'gpt-4o'): Promise<{ content?: string; error?: string }> {
-  const API_URL = import.meta.env.VITE_API_URL || '/api/chat'
+  const API_URL = import.meta.env.VITE_API_URL || 'https://apexflow-token.onrender.com/api/chat'
   
   try {
     const response = await fetch(API_URL, {

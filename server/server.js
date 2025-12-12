@@ -11,12 +11,16 @@ app.use(express.json())
 
 app.post('/api/chat', async (req, res) => {
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+  const CHAT_API_URL = process.env.CHAT_API_URL || 'https://apexflow-token.onrender.com/api/chat'
+  
   console.log('[server] New chat request received', { 
     messageCount: req.body?.messages?.length || 0,
-    model: req.body?.model || 'gpt-4o'
+    model: req.body?.model || 'gpt-4o',
+    apiUrl: CHAT_API_URL
   })
 
-  if (!OPENAI_API_KEY) {
+  // Only require OPENAI_API_KEY if using OpenAI directly
+  if (!CHAT_API_URL.includes('apexflow-token') && !OPENAI_API_KEY) {
     console.error('[server] Missing OPENAI_API_KEY')
     return res.status(500).json({ error: 'Missing API key' })
   }
@@ -28,12 +32,18 @@ app.post('/api/chat', async (req, res) => {
   }
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const headers = {
+      'Content-Type': 'application/json',
+    }
+    
+    // Add Authorization header only if using OpenAI directly
+    if (!CHAT_API_URL.includes('apexflow-token') && OPENAI_API_KEY) {
+      headers['Authorization'] = `Bearer ${OPENAI_API_KEY}`
+    }
+    
+    const response = await fetch(CHAT_API_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      },
+      headers: headers,
       body: JSON.stringify({
         model: model,
         messages: messages,
@@ -48,14 +58,14 @@ app.post('/api/chat', async (req, res) => {
     try {
       data = JSON.parse(text)
     } catch (e) {
-      console.warn('[server] OpenAI returned non-JSON response', text.slice(0, 1000))
-      return res.status(502).json({ error: 'Invalid response from OpenAI', raw: text })
+      console.warn('[server] Chat API returned non-JSON response', text.slice(0, 1000))
+      return res.status(502).json({ error: 'Invalid response from chat API', raw: text })
     }
 
     if (!response.ok) {
-      console.error('[server] OpenAI API error', response.status, data)
+      console.error('[server] Chat API error', response.status, data)
       return res.status(response.status).json({ 
-        error: data.error?.message || data.error || 'OpenAI API error',
+        error: data.error?.message || data.error || 'Chat API error',
         type: data.error?.type || 'unknown'
       })
     }
@@ -74,5 +84,6 @@ app.post('/api/chat', async (req, res) => {
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`🚀 Chat API server running on http://localhost:${PORT}`)
-  console.log(`📝 Using OpenAI API for text generation`)
+  const apiUrl = process.env.CHAT_API_URL || 'https://apexflow-token.onrender.com/api/chat'
+  console.log(`📝 Using chat API: ${apiUrl}`)
 })

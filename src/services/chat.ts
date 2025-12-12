@@ -9,7 +9,7 @@ export interface ChatResponse {
   model?: string
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_URL = import.meta.env.VITE_API_URL || 'https://apexflow-token.onrender.com'
 
 export async function sendChatMessage(
   messages: ChatMessage[],
