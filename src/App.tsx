@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import './App.css'
-import { Zap, Rocket, Shield, BotMessageSquare, ArrowUp, ArrowRightLeft, BarChart3, LineChart, Menu, X, User, Settings, LogOut, Wallet, Crown, ArrowUpRight, Copy, Trophy, Compass, Users, Flame, Gift, TrendingUp, Plus, Clock, PlayCircle, PauseCircle, Trash2, Check, Link2 } from 'lucide-react'
+import { Zap, Rocket, Shield, BotMessageSquare, ArrowUp, ArrowRightLeft, BarChart3, LineChart, Menu, X, User, Settings, LogOut, Wallet, Crown, ArrowUpRight, Copy, Trophy, Compass, Users, Flame, Gift, TrendingUp, Plus, Clock, PlayCircle, PauseCircle, Trash2, Check, Link2, Share2, Eye, ExternalLink, Minus, ArrowLeftRight, Globe, Terminal } from 'lucide-react'
 const brandLogo = '/Logo.png'
 import { FaTelegramPlane } from "react-icons/fa";
 import { useWallet } from '@solana/wallet-adapter-react'
@@ -154,14 +154,7 @@ function EmailLogin() {
   )
 }
 
-type Page = 'terminal' | 'metrics' | 'pricing' | 'profile' | 'automations'
-
-const navLinks: Array<{ key: Page; label: string }> = [
-  { key: 'terminal', label: 'Terminal' },
-  { key: 'automations', label: 'Automations' },
-  { key: 'metrics', label: 'Metrics' },
-  { key: 'pricing', label: 'Pricing' },
-]
+type Page = 'terminal' | 'metrics' | 'pricing' | 'profile' | 'automations' | 'refer' | 'wallet' | 'marketplace'
 
 type PricingPlan = {
   name: string
@@ -192,7 +185,7 @@ const pricingPlans: PricingPlan[] = [
     price: '$10',
     stake: 'or stake >50,000 ApexFlow',
     highlights: ['15,000 credits/month', '10 live Automations', 'Social Trading', 'Unlimited Terminal messages'],
-    invite: '$20 per invited friend',
+    invite: '$50 per invited friend',
     cta: 'Upgrade',
     badge: 'For traders ready to run strategies and start social trading',
   },
@@ -290,15 +283,12 @@ function App() {
     const text = rawText.trim()
     if (!text) return
     
-    // Check if this is an automation request
     const automation = parseAutomationPrompt(text)
     
     if (automation) {
-      // Show automation confirmation modal
       setAutomationDetails(automation)
       setShowAutomationModal(true)
       
-      // Add user message and assistant response
       const userMessage: ChatMessage = { role: 'user', content: text }
       const assistantMessage: ChatMessage = {
         role: 'assistant',
@@ -443,31 +433,44 @@ function App() {
             </button>
           </div>
           <div className="side-group">
-            <p className="side-label">Workspace</p>
-            {navLinks.map((link) => (
-              <button
-                key={link.key}
-                className={`side-link ${page === link.key ? 'active' : ''}`}
-                onClick={() => {
-                  setPage(link.key)
-                  setIsSidebarOpen(false)
-                }}
-              >
-                <span className="side-link-content">
-                  <span>{link.label}</span>
-                  {link.key === 'metrics' && (
-                    <span className="side-link-badge">
-                      <Flame size={14} />
-                      <span style={{ fontSize: '11px' }}>New</span>
-                    </span>
-                  )}
-                </span>
-              </button>
-            ))}
+            <p className="side-label">My Agent</p>
+            <button
+              className={`side-link ${page === 'terminal' ? 'active' : ''}`}
+              onClick={() => {
+                setPage('terminal')
+                setIsSidebarOpen(false)
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <Terminal size={16} />
+              <span>Terminal</span>
+            </button>
+            <button
+              className={`side-link ${page === 'wallet' ? 'active' : ''}`}
+              onClick={() => {
+                setPage('wallet')
+                setIsSidebarOpen(false)
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <Wallet size={16} />
+              <span>Wallet</span>
+            </button>
+            <button
+              className={`side-link ${page === 'automations' ? 'active' : ''}`}
+              onClick={() => {
+                setPage('automations')
+                setIsSidebarOpen(false)
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <Zap size={16} />
+              <span>Automations</span>
+            </button>
           </div>
           <div className="side-group">
             <p className="side-label">
-              Social Trading <span style={{ width: '90px', height: '22px', fontSize: '10px' }} className="pill pill-soon">Coming Soon</span>
+              Social Trading <span className="pill pill-soon">Soon</span>
             </p>
             <button style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className="side-link" disabled>
               <Compass size={16} />
@@ -477,10 +480,45 @@ function App() {
               <Users size={16} />
               <span>Activity</span>
             </button>
-            
             <button style={{ display: 'flex', alignItems: 'center', gap: '8px' }} className="side-link" disabled>
               <Trophy size={16} />
               <span>Leaderboard</span>
+            </button>
+          </div>
+          <div style={{ height: '1px', background: 'rgba(255, 255, 255, 0.1)', margin: '8px 0' }}></div>
+          <div className="side-group">
+            <button
+              className={`side-link ${page === 'marketplace' ? 'active' : ''}`}
+              onClick={() => {
+                setPage('marketplace')
+                setIsSidebarOpen(false)
+              }}
+            >
+              <span>Marketplace</span>
+            </button>
+            <button
+              className={`side-link ${page === 'metrics' ? 'active' : ''}`}
+              onClick={() => {
+                setPage('metrics')
+                setIsSidebarOpen(false)
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              
+              <span>Metrics</span>
+              <span className="side-link-badge" style={{ marginLeft: 'auto' }}>
+              <Flame size={14} style={{ color: '#f97316' }} />
+                <span style={{ fontSize: '11px', color: '#f97316' }}>New</span>
+              </span>
+            </button>
+            <button
+              className={`side-link ${page === 'pricing' ? 'active' : ''}`}
+              onClick={() => {
+                setPage('pricing')
+                setIsSidebarOpen(false)
+              }}
+            >
+              <span>Subscription</span>
             </button>
           </div>
           <div className="side-group side-auth-group">
@@ -488,7 +526,7 @@ function App() {
             <div className="community-links">
               <a
                 className="community-link community-link-x"
-                href="https://x.com/ApexFlow"
+                href="https://x.com/apexflowagent"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="X"
@@ -497,7 +535,7 @@ function App() {
               </a>
               <a
                 className="community-link community-link-telegram"
-                href="https://t.me/ApexFlow"
+                href="https://t.me/alphaflowtrade"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Telegram"
@@ -540,11 +578,6 @@ function App() {
               <Menu size={18} />
             </button>
           </div>
-          <div className="mobile-header-credits">
-            <span className="mobile-credits-badge">STARTER</span>
-            <span className="mobile-credits-dot" />
-            <span className="mobile-credits-text">811 credits</span>
-          </div>
           <div className="mobile-header-right">
             <button className="mobile-earn-btn" onClick={() => window.open('https://apexflow.io/earn', '_blank')}>
               <Gift size={16} />
@@ -576,9 +609,9 @@ function App() {
           <div className="chat-shell">
             <div className="terminal-header-bar desktop-only">
               <div className="terminal-header-right">
-                <button className="terminal-earn-btn" onClick={() => window.open('https://apexflow.io/earn', '_blank')}>
+                <button className="terminal-earn-btn" onClick={() => setPage('refer')}>
                   <Gift size={16} />
-                  Earn $30
+                  Earn $50
                 </button>
                 <button className="terminal-login-btn" onClick={openLoginPopup}>
                   Login
@@ -646,16 +679,6 @@ function App() {
                   <Zap size={20} />
                   Create Automation
                 </button>
-                <div className="powered-by">
-                  <div className="powered-by-icons">
-                    <div className="powered-icon" />
-                    <div className="powered-icon" />
-                    <div className="powered-icon" />
-                    <div className="powered-icon" />
-                    <div className="powered-icon" />
-                  </div>
-                  <span className="powered-by-text">Powered by expert agents & plugins</span>
-                </div>
               </div>
             )}
 
@@ -727,7 +750,10 @@ function App() {
         {page === 'pricing' && <PricingPage />}
         {page === 'metrics' && <MetricsPage />}
         {page === 'automations' && <AutomationsPage onNavigate={setPage} />}
+        {page === 'wallet' && <WalletPage onNavigate={setPage} handleCopyAddress={handleCopyAddress} connected={connected} publicKey={publicKey} dummySolanaAccount={dummySolanaAccount} />}
         {page === 'profile' && <ProfilePage onNavigate={setPage} onLogout={logout} getDisplayAddress={getDisplayAddress} authenticated={authenticated} />}
+        {page === 'refer' && <ReferEarnPage />}
+        {page === 'marketplace' && <MarketplacePage />}
 
         <div className="chat-input-bar mobile-input">
           <button className="mobile-input-action" onClick={() => setPage('automations')}>
@@ -1327,6 +1353,695 @@ function MetricsPage() {
         </div>
       </div>
 
+    </div>
+  )
+}
+
+function ReferEarnPage() {
+  const [referralCode] = useState('UZBBW761')
+  const [copied, setCopied] = useState(false)
+  const [totalInvited] = useState(0)
+  const [directEarnings] = useState(0)
+  const [feesEarned] = useState(0)
+  const [currentTier] = useState('STARTER')
+  
+  const referralLink = `chat.apexflowagent.com/invite/${referralCode}`
+  const fullReferralLink = `https://${referralLink}`
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(fullReferralLink)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy link', err)
+    }
+  }
+
+  const handleShare = async () => {
+    const shareData = {
+      title: 'Join ApexFlow and Earn!',
+      text: 'Use my referral link to join ApexFlow and get $10 Welcome Bonus!',
+      url: fullReferralLink,
+    }
+
+    try {
+      if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+        await navigator.share(shareData)
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(fullReferralLink)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      }
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        console.error('Error sharing', err)
+        // Fallback: copy to clipboard
+        try {
+          await navigator.clipboard.writeText(fullReferralLink)
+          setCopied(true)
+          setTimeout(() => setCopied(false), 2000)
+        } catch (copyErr) {
+          console.error('Failed to copy link', copyErr)
+        }
+      }
+    }
+  }
+
+  const getTierBenefits = () => {
+    switch (currentTier) {
+      case 'STARTER':
+        return {
+          perReferral: '$20',
+          feeMultiplier: '1x',
+          feeOnUsage: '10.00%',
+        }
+      case 'PRO':
+        return {
+          perReferral: '$20',
+          feeMultiplier: '1.5x',
+          feeOnUsage: '12.00%',
+        }
+      case 'EXPERT':
+        return {
+          perReferral: '$25',
+          feeMultiplier: '2x',
+          feeOnUsage: '15.00%',
+        }
+      case 'WHALE':
+        return {
+          perReferral: '$30',
+          feeMultiplier: '3x',
+          feeOnUsage: '20.00%',
+        }
+      default:
+        return {
+          perReferral: '$50',
+          feeMultiplier: '1x',
+          feeOnUsage: '10.00%',
+        }
+    }
+  }
+
+  const tierBenefits = getTierBenefits()
+
+  return (
+    <div className="refer-earn-page">
+      <div className="refer-earn-header">
+        <h1 className="refer-earn-title">Refer & Earn</h1>
+        <p className="refer-earn-subtitle">
+          Share your referral link to earn $30 paid instantly to your wallet for every friend.
+        </p>
+      </div>
+
+      <div className="refer-earn-cards">
+        <div className="refer-earn-card">
+          <div className="refer-earn-card-header">
+            <h3 className="refer-earn-card-title">Your Referral Link</h3>
+            <p className="refer-earn-card-subtitle">Share this link with your friends</p>
+          </div>
+          <div className="refer-earn-link-container">
+            <input
+              type="text"
+              className="refer-earn-link-input"
+              value={referralLink}
+              readOnly
+            />
+            <button
+              className="refer-earn-copy-btn"
+              onClick={handleCopyLink}
+              aria-label="Copy referral link"
+              title={copied ? "Copied!" : "Copy link"}
+            >
+              {copied ? <Check size={16} /> : <Copy size={16} />}
+            </button>
+            <button
+              className="refer-earn-share-btn"
+              onClick={handleShare}
+              aria-label="Share referral link"
+            >
+              <Share2 size={14} />
+              Share
+            </button>
+          </div>
+        </div>
+
+        <div className="refer-earn-card">
+          <div className="refer-earn-card-header">
+            <h3 className="refer-earn-card-title">Your Progress</h3>
+            <p className="refer-earn-card-subtitle">Track your referral success</p>
+          </div>
+          <div className="refer-earn-metrics">
+            <div className="refer-earn-metric">
+              <span className="refer-earn-metric-value">{totalInvited}</span>
+              <span className="refer-earn-metric-label">Total Invited</span>
+            </div>
+            <div className="refer-earn-metric">
+              <span className="refer-earn-metric-value">${directEarnings}</span>
+              <span className="refer-earn-metric-label">Direct Earnings</span>
+            </div>
+            <div className="refer-earn-metric">
+              <span className="refer-earn-metric-value">{feesEarned}</span>
+              <span className="refer-earn-metric-label">Fees ($ETHY)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="refer-earn-tier-card">
+        <div className="refer-earn-tier-header">
+          <h3 className="refer-earn-tier-title">Your Tier Benefits</h3>
+          <span className="refer-earn-tier-badge">{currentTier}</span>
+        </div>
+        <div className="refer-earn-tier-benefits">
+          <div className="refer-earn-tier-benefit">
+            <span className="refer-earn-tier-benefit-value">{tierBenefits.perReferral}</span>
+            <span className="refer-earn-tier-benefit-label">Per Referral</span>
+          </div>
+          <div className="refer-earn-tier-benefit">
+            <span className="refer-earn-tier-benefit-value">{tierBenefits.feeMultiplier}</span>
+            <span className="refer-earn-tier-benefit-label">Fee Multiplier</span>
+          </div>
+          <div className="refer-earn-tier-benefit">
+            <span className="refer-earn-tier-benefit-value">{tierBenefits.feeOnUsage}</span>
+            <span className="refer-earn-tier-benefit-label">Fee on Usage</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="refer-earn-how-it-works">
+        <h2 className="refer-earn-how-title">How it Works</h2>
+        <div className="refer-earn-steps">
+          <div className="refer-earn-step">
+            <div className="refer-earn-step-number">1</div>
+            <h3 className="refer-earn-step-title">Share your link</h3>
+            <p className="refer-earn-step-description">
+              Share your unique referral link with friends. Unlimited referrals.
+            </p>
+          </div>
+          <div className="refer-earn-step">
+            <div className="refer-earn-step-number">2</div>
+            <h3 className="refer-earn-step-title">Deploy the agent</h3>
+            <p className="refer-earn-step-description">
+              Your friends deploy an Agent and join any paid plan.
+            </p>
+          </div>
+          <div className="refer-earn-step">
+            <div className="refer-earn-step-number">3</div>
+            <h3 className="refer-earn-step-title">Start earning</h3>
+            <p className="refer-earn-step-description">
+              Get direct payment + weekly fees. Your friend gets $10 also as a Welcome Bonus.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function WalletPage({ 
+  onNavigate, 
+  handleCopyAddress,
+  connected,
+  publicKey,
+  dummySolanaAccount
+}: { 
+  onNavigate: (page: Page) => void
+  handleCopyAddress: () => void
+  connected: boolean
+  publicKey: any
+  dummySolanaAccount: string | null
+}) {
+  const [activeTab, setActiveTab] = useState<'assets' | 'transactions' | 'credits'>('assets')
+  const [portfolioValue] = useState(0)
+  const [portfolioChange] = useState(0)
+  const [credits] = useState(1000)
+  const [copied, setCopied] = useState(false)
+
+  const getFullAddress = () => {
+    if (connected && publicKey) return publicKey.toBase58()
+    if (dummySolanaAccount) return dummySolanaAccount
+    return '0x2CeE6edF5b6F42d9Cf853b16EA717aA6C9833F21'
+  }
+
+  const handleCopy = async () => {
+    try {
+      const address = getFullAddress()
+      if (navigator?.clipboard) {
+        await navigator.clipboard.writeText(address)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      }
+      handleCopyAddress()
+    } catch (err) {
+      console.error('Failed to copy address', err)
+    }
+  }
+
+  const handleOpenExplorer = () => {
+    const address = getFullAddress()
+    const explorerUrl = `https://solscan.io/account/${address}`
+    window.open(explorerUrl, '_blank')
+  }
+
+  const creditsIcon = (
+    <div style={{
+      width: '24px',
+      height: '24px',
+      borderRadius: '50%',
+      background: 'radial-gradient(circle at 30% 30%, rgba(169, 75, 255, 0.8), rgba(75, 31, 161, 0.6))',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      <div style={{
+        width: '12px',
+        height: '12px',
+        borderRadius: '50%',
+        background: 'rgba(255, 255, 255, 0.9)'
+      }} />
+    </div>
+  )
+
+  return (
+    <div className="wallet-page">
+      <h1 className="wallet-page-title">Wallet</h1>
+      
+      <div className="wallet-cards-container">
+        <div className="wallet-details-card">
+          <div className="wallet-address-header">
+            <span className="wallet-address-label">Wallet Address</span>
+            <div className="wallet-address-actions">
+              <button 
+                className="wallet-icon-btn" 
+                onClick={handleCopy}
+                aria-label="Copy address"
+                title={copied ? "Copied!" : "Copy address"}
+              >
+                {copied ? <Check size={16} /> : <Copy size={16} />}
+              </button>
+              <button 
+                className="wallet-icon-btn" 
+                onClick={handleOpenExplorer}
+                aria-label="Open in explorer"
+              >
+                <ExternalLink size={16} />
+              </button>
+            </div>
+          </div>
+          <div className="wallet-address-value">{getFullAddress()}</div>
+          
+          <div className="wallet-stats-row">
+            <div className="wallet-stat-item">
+              <span className="wallet-stat-label">PORTFOLIO VALUE</span>
+              <div className="wallet-stat-value-large">${portfolioValue.toFixed(2)}</div>
+              <div className="wallet-stat-change">{portfolioChange.toFixed(2)} ({portfolioChange >= 0 ? '+' : ''}{portfolioChange.toFixed(2)}%)</div>
+            </div>
+            <div className="wallet-stat-item">
+              {creditsIcon}
+              <div className="wallet-stat-value-large">{credits.toLocaleString()}</div>
+              <span className="wallet-stat-label">CREDITS</span>
+            </div>
+          </div>
+
+          <div className="wallet-action-buttons">
+            <button className="wallet-add-funds-btn">
+              <Plus size={16} />
+              Add Funds
+            </button>
+            <button className="wallet-withdraw-btn">
+              <Minus size={16} />
+              Withdraw
+            </button>
+          </div>
+        </div>
+
+        <div className="wallet-how-it-works-card">
+          <h3 className="wallet-how-it-works-title">How it works</h3>
+          <p className="wallet-how-it-works-text">
+            This is your Personal Onchain Agent. ApexFlow AI lets you define Automated Tasks to buy, sell, stake or transfer assets—based on your own strategy. You can set up rules like daily staking or DCA (Dollar Cost Averaging) to accumulate tokens over time. Just define the logic, frequency, and intent — ApexFlow will execute for you. Trade smarter, let ApexFlow do the work for you while you sleep.
+          </p>
+          <a 
+            href="https://docs.apexflow.io" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="wallet-docs-link"
+          >
+            Read more on our Docs
+            <ExternalLink size={14} />
+          </a>
+        </div>
+      </div>
+
+      <div className="wallet-tabs-container">
+        <div className="wallet-tabs">
+          <button 
+            className={`wallet-tab ${activeTab === 'assets' ? 'active' : ''}`}
+            onClick={() => setActiveTab('assets')}
+          >
+            <Eye size={16} />
+            Assets
+          </button>
+          <button 
+            className={`wallet-tab ${activeTab === 'transactions' ? 'active' : ''}`}
+            onClick={() => setActiveTab('transactions')}
+          >
+            <ArrowLeftRight size={16} />
+            Transactions
+          </button>
+          <button 
+            className={`wallet-tab ${activeTab === 'credits' ? 'active' : ''}`}
+            onClick={() => setActiveTab('credits')}
+          >
+            <Settings size={16} />
+            Credits
+          </button>
+        </div>
+        <button className="wallet-create-automation-btn" onClick={() => onNavigate('terminal')}>
+          <Zap size={16} />
+          Create Automation
+        </button>
+      </div>
+
+      <div className="wallet-content-area">
+        {activeTab === 'assets' && (
+          <div className="wallet-empty-state">
+            <p className="wallet-empty-text">No assets found</p>
+          </div>
+        )}
+        {activeTab === 'transactions' && (
+          <div className="wallet-empty-state">
+            <p className="wallet-empty-text">No transactions found</p>
+          </div>
+        )}
+        {activeTab === 'credits' && (
+          <div className="wallet-empty-state">
+            <p className="wallet-empty-text">Credits history will appear here</p>
+          </div>
+        )}
+      </div>
+
+      <div className="wallet-x-integration-banner">
+        <div className="wallet-x-banner-left">
+          <div className="wallet-x-icon">𝕏</div>
+          <div className="wallet-x-banner-content">
+            <h4 className="wallet-x-banner-title">X Integration</h4>
+            <p className="wallet-x-banner-text">
+              Connect your profile for creating Automations or copy from others directly on X by simply interacting with @apexflow_agent.
+            </p>
+          </div>
+        </div>
+        <button className="wallet-x-banner-btn" disabled>
+          Coming soon
+        </button>
+      </div>
+    </div>
+  )
+}
+
+type MarketplaceItem = {
+  id: string
+  name: string
+  type: 'agent' | 'plugin'
+  provider?: string
+  icon: string
+  categories: string[]
+  description: string
+  status: 'available' | 'coming-soon'
+  actionText?: string
+  url?: string
+}
+
+function MarketplacePage() {
+  const [activeFilter, setActiveFilter] = useState<'all' | 'agents' | 'plugins'>('all')
+
+  const renderIcon = (icon: string) => {
+    // If icon is a PNG path, render as image
+    if (icon.endsWith('.png')) {
+      return <img src={icon} alt="" className="marketplace-icon-image" />
+    }
+    // Fallback for emoji (like "More to Come!")
+    return <span className="marketplace-icon-emoji">{icon}</span>
+  }
+
+  const marketplaceItems: MarketplaceItem[] = [
+    // Agents
+    {
+      id: 'aixbt',
+      name: 'AIXBT',
+      type: 'agent',
+      provider: 'x402',
+      icon: '/aixbt.png',
+      categories: ['Alpha', 'Mindshare'],
+      description: 'AIXBT scans narratives, social signals, and on-chain flows to surface actionable alpha ideas before they go mainstream. It\'s your alpha engine—ask it for trend insights, sentiment shifts or next big moves. Combine its insights with your agents\' analysis for stronger trade conviction.',
+      status: 'available',
+      actionText: 'Try it now',
+      url: 'https://x.com/aixbt_agent'
+    },
+    {
+      id: 'gloria-ai',
+      name: 'Gloria AI',
+      type: 'agent',
+      provider: 'x402',
+      icon: '/gloria.png',
+      categories: ['Mindshare'],
+      description: 'Gloria AI monitors news, social sentiment, and developments in crypto & AI in real time to tell you when the market tone is shifting. Use it to layer sentiment insight onto your trade logic or to warn you when things may be turning. It helps you coordinate agents with a news-aware lens.',
+      status: 'available',
+      actionText: 'Try it now',
+      url: 'https://iamgloria.com/'
+    },
+    {
+      id: 'loky',
+      name: 'Loky',
+      type: 'agent',
+      provider: 'ACP',
+      icon: '/loky.png',
+      categories: ['Market Insights'],
+      description: 'Loky delivers technical analysis, volatility modeling, and contextual signal intelligence tailored to your positions and holdings. Ask it for support, resistance, momentum, or trade setups on any token. Its insights adapt as you trade and evolve your strategy.',
+      status: 'available',
+      actionText: 'Try it now',
+      url: 'https://x.com/Loky_AI'
+    },
+    {
+      id: 'whale-intel',
+      name: 'Whale Intel',
+      type: 'agent',
+      provider: 'MCP',
+      icon: '/whale.png',
+      categories: ['Market Insights'],
+      description: 'Whale Intel watches large wallet flows, staking / unstaking events, and institutional moves in real time. Use it to detect where the big money is shifting, and validate or filter your trade ideas. It gives you early signals from macro on-chain behavior.',
+      status: 'available',
+      actionText: 'Try it now',
+      url: 'https://x.com/WhaleintelAI'
+    },
+    // Available Plugins
+    {
+      id: 'coingecko',
+      name: 'Coingecko',
+      type: 'plugin',
+      icon: '/coingecko.png',
+      categories: ['Market Insights'],
+      description: 'Coingecko plugin provides live pricing, volume, market cap and trending token data from a trusted source. Use it to catch up on the trends and help you discover your next gem.',
+      status: 'available',
+      actionText: 'Try it now',
+      url: 'https://www.coingecko.com'
+    },
+    {
+      id: '0x',
+      name: '0x',
+      type: 'plugin',
+      icon: '/0x.png',
+      categories: ['Trading'],
+      description: '0x plugin is your seamless, optimized swap provider—route trades across liquidity to achieve best price and minimal friction. Let your agents execute trades automatically with routing intelligence and low slippage.',
+      status: 'available',
+      actionText: 'Try it now',
+      url: 'https://0x.org'
+    },
+    // Coming Soon Plugins
+    {
+      id: 'avantis',
+      name: 'Avantis',
+      type: 'plugin',
+      icon: '/avantis.png',
+      categories: ['Trading'],
+      description: 'Avantis unlocks up to 500x leveraged trading, letting your Agent go long or short across crypto but also on Stocks and Forex! A new era of high-voltage strategies with managed risk and massive alpha potential.',
+      status: 'coming-soon'
+    },
+    {
+      id: 'indexy',
+      name: 'Indexy',
+      type: 'plugin',
+      icon: '/indexy.png',
+      categories: ['Trading'],
+      description: 'Indexy plugin help you to surface top performing indexes and basket strategies for tokens and sectors. Use it to allocate across clusters of assets rather than single tokens, and spot hidden opportunities via index momentum.',
+      status: 'coming-soon'
+    },
+    {
+      id: 'nansen-ai',
+      name: 'Nansen AI',
+      type: 'plugin',
+      icon: '/nansen.png',
+      categories: ['Market Insights'],
+      description: 'Nansen AI plugin unlocks powerful on-chain analytics — letting your agent track smart money flows, token holdings, and whale activity across the market. Use it to detect accumulation patterns, identify wallet clusters, and catch alpha before the crowd. Perfect for strengthening your agent\'s conviction in every trade.',
+      status: 'coming-soon'
+    },
+    {
+      id: 'tradingview',
+      name: 'TradingView',
+      type: 'plugin',
+      icon: '/tradingview.png',
+      categories: ['Trading'],
+      description: 'TradingView plugin brings real-time charts and technical analysis directly into your Ethy Terminal. Your agent can visualize its strategies, confirm signals, and plot buy/sell levels directly on live charts — blending AI-driven insights with professional-grade visual tools for smarter execution.',
+      status: 'coming-soon'
+    },
+    {
+      id: 'x-plugin',
+      name: 'X',
+      type: 'plugin',
+      icon: '/x.png',
+      categories: ['Alpha', 'Mindshare'],
+      description: 'X / Twitter plugin lets agents tap into influencer feeds, mentions, KOL chatter and social momentum. Monitor when your favorite accounts talk about tokens, track mention spikes, and use social buzz as an input to trade decisions.',
+      status: 'coming-soon'
+    },
+    {
+      id: 'more-to-come',
+      name: 'More to Come!',
+      type: 'plugin',
+      icon: '✨',
+      categories: [],
+      description: 'We\'re constantly expanding our ecosystem with new integrations for yield optimization, advanced trading strategies, and cutting-edge DeFi protocols.',
+      status: 'coming-soon'
+    }
+  ]
+
+  const filteredItems = activeFilter === 'all' 
+    ? marketplaceItems 
+    : activeFilter === 'agents'
+    ? marketplaceItems.filter(item => item.type === 'agent')
+    : marketplaceItems.filter(item => item.type === 'plugin')
+
+  const availableItems = filteredItems.filter(item => item.status === 'available')
+  const comingSoonItems = filteredItems.filter(item => item.status === 'coming-soon')
+
+  return (
+    <div className="marketplace-page">
+      <div className="page-head">
+        <div>
+          <p className="side-label">Agents Hub & Plugins</p>
+          <h2 className="page-title">Marketplace</h2>
+          <p className="page-sub">Discover and integrate powerful agents and plugins to enhance your trading strategies</p>
+        </div>
+      </div>
+
+      <div className="marketplace-filters">
+        <button 
+          className={`marketplace-filter-btn ${activeFilter === 'all' ? 'active' : ''}`}
+          onClick={() => setActiveFilter('all')}
+        >
+          All
+        </button>
+        <button 
+          className={`marketplace-filter-btn ${activeFilter === 'agents' ? 'active' : ''}`}
+          onClick={() => setActiveFilter('agents')}
+        >
+          Agents
+        </button>
+        <button 
+          className={`marketplace-filter-btn ${activeFilter === 'plugins' ? 'active' : ''}`}
+          onClick={() => setActiveFilter('plugins')}
+        >
+          Plugins
+        </button>
+      </div>
+
+      {availableItems.length > 0 && (
+        <div className="marketplace-section">
+          <h3 className="marketplace-section-title">Available Now</h3>
+          <div className="marketplace-grid">
+            {availableItems.map((item) => (
+              <div key={item.id} className="marketplace-card">
+                <div className="marketplace-card-header">
+                  <div className="marketplace-card-icon">
+                    {renderIcon(item.icon)}
+                  </div>
+                  <div className="marketplace-card-title-section">
+                    <div className="marketplace-card-title-row">
+                      <h3 className="marketplace-card-title">{item.name}</h3>
+                      <span className="marketplace-card-badge">
+                        {item.type === 'agent' ? `Agent | ${item.provider}` : 'Plugin'}
+                      </span>
+                    </div>
+                    <div className="marketplace-card-categories">
+                      {item.categories.map((cat) => (
+                        <span key={cat} className="marketplace-category-tag">
+                          <Globe size={12} />
+                          {cat}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <p className="marketplace-card-description">{item.description}</p>
+                {item.url ? (
+                  <a 
+                    href={item.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="marketplace-card-action primary"
+                  >
+                    {item.actionText || 'Try it now'}
+                  </a>
+                ) : (
+                  <button className="marketplace-card-action primary">
+                    {item.actionText || 'Try it now'}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {comingSoonItems.length > 0 && (
+        <div className="marketplace-section">
+          <h3 className="marketplace-section-title">Coming Soon</h3>
+          <div className="marketplace-grid">
+            {comingSoonItems.map((item) => (
+              <div key={item.id} className="marketplace-card marketplace-card-coming-soon">
+                <div className="marketplace-card-header">
+                  <div className="marketplace-card-icon">
+                    {renderIcon(item.icon)}
+                  </div>
+                  <div className="marketplace-card-title-section">
+                    <div className="marketplace-card-title-row">
+                      <h3 className="marketplace-card-title">{item.name}</h3>
+                      <span className="marketplace-card-badge">
+                        {item.type === 'agent' ? `Agent | ${item.provider}` : 'Plugin'}
+                      </span>
+                    </div>
+                    {item.categories.length > 0 && (
+                      <div className="marketplace-card-categories">
+                        {item.categories.map((cat) => (
+                          <span key={cat} className="marketplace-category-tag">
+                            <Globe size={12} />
+                            {cat}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <p className="marketplace-card-description">{item.description}</p>
+                <div className="marketplace-card-status">
+                  <Clock size={14} />
+                  <span>Coming Soon</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
