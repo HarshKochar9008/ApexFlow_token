@@ -1788,129 +1788,102 @@ function MarketplacePage() {
   const marketplaceItems: MarketplaceItem[] = [
     // Agents
     {
-      id: 'aixbt',
-      name: 'AIXBT',
+      id: 'apexflow',
+      name: 'ApexFlow',
       type: 'agent',
       provider: 'x402',
       icon: '/aixbt.png',
-      categories: ['Alpha', 'Mindshare'],
-      description: 'AIXBT scans narratives, social signals, and on-chain flows to surface actionable alpha ideas before they go mainstream. It\'s your alpha engine—ask it for trend insights, sentiment shifts or next big moves. Combine its insights with your agents\' analysis for stronger trade conviction.',
+      categories: ['Alpha Intelligence'],
+      description: 'ApexFlow analyzes market narratives, deep liquidity signals, behavioral sentiment, and on-chain patterns to detect alpha before it surfaces publicly. It\'s your evolving intelligence engine—ask it for breakout forecasts, reversal cues, or narrative rotations. Combine its insights with your trading modes for unmatched conviction.',
       status: 'available',
       actionText: 'Try it now',
       url: 'https://x.com/aixbt_agent'
     },
     {
-      id: 'gloria-ai',
-      name: 'Gloria AI',
+      id: 'sentra-ai',
+      name: 'Sentra AI',
       type: 'agent',
       provider: 'x402',
       icon: '/gloria.png',
-      categories: ['Mindshare'],
-      description: 'Gloria AI monitors news, social sentiment, and developments in crypto & AI in real time to tell you when the market tone is shifting. Use it to layer sentiment insight onto your trade logic or to warn you when things may be turning. It helps you coordinate agents with a news-aware lens.',
+      categories: ['Mindshare Pulse'],
+      description: 'Sentra AI monitors global news, social sentiment, regulatory developments, and AI-scored market tone in real time. It helps you understand when momentum is shifting, when fear is rising, and when opportunity windows open. Use it to inject sentiment awareness into your trading logic or receive alerts when market psychology changes.',
       status: 'available',
       actionText: 'Try it now',
       url: 'https://iamgloria.com/'
     },
     {
-      id: 'loky',
-      name: 'Loky',
+      id: 'vortexx',
+      name: 'VortexX',
       type: 'agent',
       provider: 'ACP',
       icon: '/loky.png',
-      categories: ['Market Insights'],
-      description: 'Loky delivers technical analysis, volatility modeling, and contextual signal intelligence tailored to your positions and holdings. Ask it for support, resistance, momentum, or trade setups on any token. Its insights adapt as you trade and evolve your strategy.',
+      categories: ['Market Dynamics'],
+      description: 'VortexX delivers next-generation technical intelligence—volatility mapping, momentum curves, liquidity stress signals, and high-resolution support/resistance modeling. Ask it for setups on any token or pair. Its intelligence evolves with your strategy, optimizing entries and exits with precision.',
       status: 'available',
       actionText: 'Try it now',
       url: 'https://x.com/Loky_AI'
     },
     {
-      id: 'whale-intel',
-      name: 'Whale Intel',
+      id: 'whalematrix',
+      name: 'WhaleMatrix',
       type: 'agent',
       provider: 'MCP',
       icon: '/whale.png',
-      categories: ['Market Insights'],
-      description: 'Whale Intel watches large wallet flows, staking / unstaking events, and institutional moves in real time. Use it to detect where the big money is shifting, and validate or filter your trade ideas. It gives you early signals from macro on-chain behavior.',
+      categories: ['Institutional Flow Radar'],
+      description: 'WhaleMatrix tracks deep-wallet movements, staking waves, institutional rotations, and cluster behavior across chains—in real time. Detect where big capital is shifting before the crowd moves. Use it to validate trade ideas, anticipate market rotations, or catch early signals from macro on-chain shifts.',
       status: 'available',
       actionText: 'Try it now',
       url: 'https://x.com/WhaleintelAI'
     },
     // Available Plugins
     {
-      id: 'coingecko',
-      name: 'Coingecko',
+      id: 'coinpulse',
+      name: 'CoinPulse',
       type: 'plugin',
       icon: '/coingecko.png',
       categories: ['Market Insights'],
-      description: 'Coingecko plugin provides live pricing, volume, market cap and trending token data from a trusted source. Use it to catch up on the trends and help you discover your next gem.',
+      description: 'CoinPulse provides trusted, real-time pricing, volume flows, volatility snapshots, and market-cap movements. Use it to stay synced with high-velocity market data and uncover assets gaining strength before they trend globally.',
       status: 'available',
       actionText: 'Try it now',
       url: 'https://www.coingecko.com'
     },
     {
-      id: '0x',
-      name: '0x',
+      id: 'pathzero',
+      name: 'PathZero',
       type: 'plugin',
       icon: '/0x.png',
       categories: ['Trading'],
-      description: '0x plugin is your seamless, optimized swap provider—route trades across liquidity to achieve best price and minimal friction. Let your agents execute trades automatically with routing intelligence and low slippage.',
+      description: 'PathZero is your frictionless routing engine—executing swaps across liquidity layers with optimized price impact and minimal slippage. Let your agent perform precision trades backed by dynamic routing intelligence.',
       status: 'available',
       actionText: 'Try it now',
       url: 'https://0x.org'
     },
     // Coming Soon Plugins
     {
-      id: 'avantis',
-      name: 'Avantis',
+      id: 'hyperlever',
+      name: 'HyperLever',
       type: 'plugin',
       icon: '/avantis.png',
       categories: ['Trading'],
-      description: 'Avantis unlocks up to 500x leveraged trading, letting your Agent go long or short across crypto but also on Stocks and Forex! A new era of high-voltage strategies with managed risk and massive alpha potential.',
+      description: 'HyperLever unlocks up to 500x leverage, enabling your agent to execute high-confidence long/short strategies across crypto, stocks, and forex. It powers a new tier of controlled high-voltage strategies with smart risk buffers and accelerated alpha potential.',
       status: 'coming-soon'
     },
     {
-      id: 'indexy',
-      name: 'Indexy',
+      id: 'indexcore',
+      name: 'IndexCore',
       type: 'plugin',
       icon: '/indexy.png',
       categories: ['Trading'],
-      description: 'Indexy plugin help you to surface top performing indexes and basket strategies for tokens and sectors. Use it to allocate across clusters of assets rather than single tokens, and spot hidden opportunities via index momentum.',
+      description: 'IndexCore helps your agent identify top-performing sectors and token clusters, allocating across baskets rather than single assets. It detects hidden strength, momentum shifts, and new thematic rotations—perfect for diversified, intelligent growth strategies.',
       status: 'coming-soon'
     },
     {
-      id: 'nansen-ai',
-      name: 'Nansen AI',
+      id: 'nansenx',
+      name: 'NansenX',
       type: 'plugin',
       icon: '/nansen.png',
       categories: ['Market Insights'],
-      description: 'Nansen AI plugin unlocks powerful on-chain analytics — letting your agent track smart money flows, token holdings, and whale activity across the market. Use it to detect accumulation patterns, identify wallet clusters, and catch alpha before the crowd. Perfect for strengthening your agent\'s conviction in every trade.',
-      status: 'coming-soon'
-    },
-    {
-      id: 'tradingview',
-      name: 'TradingView',
-      type: 'plugin',
-      icon: '/tradingview.png',
-      categories: ['Trading'],
-      description: 'TradingView plugin brings real-time charts and technical analysis directly into your Apexflow Terminal. Your agent can visualize its strategies, confirm signals, and plot buy/sell levels directly on live charts — blending AI-driven insights with professional-grade visual tools for smarter execution.',
-      status: 'coming-soon'
-    },
-    {
-      id: 'x-plugin',
-      name: 'X',
-      type: 'plugin',
-      icon: '/x.png',
-      categories: ['Alpha', 'Mindshare'],
-      description: 'X / Twitter plugin lets agents tap into influencer feeds, mentions, KOL chatter and social momentum. Monitor when your favorite accounts talk about tokens, track mention spikes, and use social buzz as an input to trade decisions.',
-      status: 'coming-soon'
-    },
-    {
-      id: 'more-to-come',
-      name: 'More to Come!',
-      type: 'plugin',
-      icon: '✨',
-      categories: [],
-      description: 'We\'re constantly expanding our ecosystem with new integrations for yield optimization, advanced trading strategies, and cutting-edge DeFi protocols.',
+      description: 'NansenX unlocks elite on-chain intelligence—smart money flows, whale identities, accumulation patterns, and ecosystem health metrics. Let your agent interpret wallet clusters, detect trend leaders early, and strengthen every trade with institutional-grade analytics.',
       status: 'coming-soon'
     }
   ]
@@ -1924,13 +1897,13 @@ function MarketplacePage() {
   const availableItems = filteredItems.filter(item => item.status === 'available')
   const comingSoonItems = filteredItems.filter(item => item.status === 'coming-soon')
 
+  const [isHovering, setIsHovering] = useState(false)
+
   return (
     <div className="marketplace-page">
       <div className="page-head">
         <div>
-          <p className="side-label">Agents Hub & Plugins</p>
-          <h2 className="page-title">Marketplace</h2>
-          <p className="page-sub">Discover and integrate powerful agents and plugins to enhance your trading strategies</p>
+          <h2 className="page-title">Agents & Plugins Hub</h2>
         </div>
       </div>
 
@@ -1957,10 +1930,23 @@ function MarketplacePage() {
 
       {availableItems.length > 0 && (
         <div className="marketplace-section">
-          <h3 className="marketplace-section-title">Available Now</h3>
-          <div className="marketplace-grid">
+          <div 
+            className={`marketplace-grid marketplace-grid-animated ${isHovering ? 'hovering' : ''}`}
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+          >
+            {isHovering && (
+              <div className="marketplace-animation-overlay">
+                <div className="marketplace-animation-text">
+                  Stake $APEX to use all plugins and agents
+                </div>
+              </div>
+            )}
             {availableItems.map((item) => (
-              <div key={item.id} className="marketplace-card">
+              <div 
+                key={item.id} 
+                className="marketplace-card marketplace-card-animated"
+              >
                 <div className="marketplace-card-header">
                   <div className="marketplace-card-icon">
                     {renderIcon(item.icon)}
