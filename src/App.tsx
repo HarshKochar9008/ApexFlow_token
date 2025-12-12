@@ -15,10 +15,11 @@ type ChatMessage = {
 }
 
 async function sendChatMessage(messages: ChatMessage[], model: string = 'gpt-4o'): Promise<{ content?: string; error?: string }> {
-  // On Vercel there is no local /api proxy, so default to the hosted chat API in production
-  const API_URL =
-    import.meta.env.VITE_API_URL ||
-    (import.meta.env.PROD ? 'https://apexflow-token.onrender.com/api/chat' : '/api/chat')
+  // Prefer explicit API base, otherwise use same-origin proxy (works in dev and prod)
+  const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+  const API_URL = apiBase ? `${apiBase}/api/chat` : '/api/chat'
+  
+  console.log('[Frontend] Sending chat request to:', API_URL, { messageCount: messages.length, model })
   
   try {
     const response = await fetch(API_URL, {
@@ -32,19 +33,25 @@ async function sendChatMessage(messages: ChatMessage[], model: string = 'gpt-4o'
       }),
     })
 
+    console.log('[Frontend] Response status:', response.status, response.statusText)
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+      console.error('[Frontend] API error:', errorData)
       return { error: errorData.error || `HTTP error! status: ${response.status}` }
     }
 
     const data = await response.json()
+    console.log('[Frontend] Response data:', data)
     
     if (data.choices && data.choices[0] && data.choices[0].message) {
       return { content: data.choices[0].message.content }
     }
     
+    console.error('[Frontend] Invalid response format:', data)
     return { error: 'Invalid response format from server' }
   } catch (error) {
+    console.error('[Frontend] Fetch error:', error)
     return { 
       error: error instanceof Error ? error.message : 'Failed to connect to chat server' 
     }
@@ -328,23 +335,40 @@ function App() {
     setChatInput('')
     setIsSending(true)
 
+    console.log('[Frontend] Starting chat request with', nextMessages.length, 'messages')
+
     try {
       const result = await sendChatMessage(nextMessages, 'gpt-4o')
+      console.log('[Frontend] Chat result:', result)
       
       if (result.error) {
+        console.error('[Frontend] Chat error:', result.error)
+        let errorContent = result.error
+        if (result.error.includes('API key') || result.error.includes('401') || result.error.includes('Unauthorized')) {
+          errorContent = `Authentication Error: Your OpenAI API key appears to be invalid or expired. Please check:\n\n1. Your API key in server/.env file\n2. That the key is valid and active at https://platform.openai.com/account/api-keys\n3. That your OpenAI account has available credits\n\nError details: ${result.error}`
+        }
         const errorMessage: ChatMessage = {
           role: 'assistant',
-          content: `I encountered an error: ${result.error}. Please check your API configuration and try again.`,
+          content: errorContent,
         }
         setChatMessages([...nextMessages, errorMessage])
-      } else {
+      } else if (result.content) {
+        console.log('[Frontend] Chat success, content length:', result.content.length)
         const aiMessage: ChatMessage = { 
           role: 'assistant', 
-          content: result.content || 'No response received.'
+          content: result.content
         }
         setChatMessages([...nextMessages, aiMessage])
+      } else {
+        console.error('[Frontend] No content in result:', result)
+        const errorMessage: ChatMessage = {
+          role: 'assistant',
+          content: 'No response received from the chat service.',
+        }
+        setChatMessages([...nextMessages, errorMessage])
       }
     } catch (error) {
+      console.error('[Frontend] Exception in sendMessage:', error)
       const errorMessage: ChatMessage = {
         role: 'assistant',
         content: `Unable to connect to the chat service. Error: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your connection and try again.`,

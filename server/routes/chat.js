@@ -1,21 +1,36 @@
 import express from 'express'
 import fetch from 'node-fetch'
 import dotenv from 'dotenv'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
 
-dotenv.config()
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+// Load .env file from server directory
+dotenv.config({ path: join(__dirname, '..', '.env') })
 
 const router = express.Router()
 
 router.post('/', async (req, res) => {
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+  const CHAT_API_URL = process.env.CHAT_API_URL || 'https://api.openai.com/v1/chat/completions'
+  const usingOpenAI = CHAT_API_URL.includes('openai.com')
+
   console.log('[server] New chat request received', { 
     messageCount: req.body?.messages?.length || 0,
-    model: req.body?.model || 'gpt-4o'
+    model: req.body?.model || 'gpt-4o',
+    apiUrl: CHAT_API_URL,
+    hasApiKey: !!OPENAI_API_KEY,
+    apiKeyPrefix: OPENAI_API_KEY ? OPENAI_API_KEY.substring(0, 10) + '...' : 'none'
   })
 
-  if (!OPENAI_API_KEY) {
+  if (usingOpenAI && !OPENAI_API_KEY) {
     console.error('[server] Missing OPENAI_API_KEY')
-    return res.status(500).json({ error: 'Missing API key' })
+    return res.status(500).json({ 
+      error: 'Missing API key',
+      message: 'Please create a .env file in the server directory with your OPENAI_API_KEY. See env.example for reference.'
+    })
   }
 
   const { messages, model = 'gpt-4o' } = req.body
@@ -25,12 +40,18 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const headers = {
+      'Content-Type': 'application/json',
+    }
+
+    // Only send Authorization when the upstream requires OpenAI keys
+    if (usingOpenAI) {
+      headers['Authorization'] = `Bearer ${OPENAI_API_KEY}`
+    }
+
+    const response = await fetch(CHAT_API_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      },
+      headers,
       body: JSON.stringify({
         model: model,
         messages: messages,
@@ -45,15 +66,25 @@ router.post('/', async (req, res) => {
     try {
       data = JSON.parse(text)
     } catch (e) {
-      console.warn('[server] OpenAI returned non-JSON response', text.slice(0, 1000))
-      return res.status(502).json({ error: 'Invalid response from OpenAI', raw: text })
+      console.warn('[server] Chat API returned non-JSON response', text.slice(0, 1000))
+      return res.status(502).json({ error: 'Invalid response from chat API', raw: text })
     }
 
     if (!response.ok) {
-      console.error('[server] OpenAI API error', response.status, data)
+      console.error('[server] Chat API error', response.status, data)
+      const errorMessage = data.error?.message || data.error || 'Chat API error'
+      // Provide more helpful error messages for common issues
+      if (response.status === 401) {
+        console.error('[server] Authentication failed - check API key')
+      } else if (response.status === 429) {
+        console.error('[server] Rate limit exceeded')
+      } else if (response.status === 500) {
+        console.error('[server] OpenAI server error')
+      }
       return res.status(response.status).json({ 
-        error: data.error?.message || data.error || 'OpenAI API error',
-        type: data.error?.type || 'unknown'
+        error: errorMessage,
+        type: data.error?.type || 'unknown',
+        status: response.status
       })
     }
 
