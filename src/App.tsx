@@ -1413,7 +1413,7 @@ function ReferEarnPage() {
     switch (currentTier) {
       case 'STARTER':
         return {
-          perReferral: '$20',
+          perReferral: '$40',
           feeMultiplier: '1x',
           feeOnUsage: '10.00%',
         }
@@ -1451,7 +1451,7 @@ function ReferEarnPage() {
       <div className="refer-earn-header">
         <h1 className="refer-earn-title">Refer & Earn</h1>
         <p className="refer-earn-subtitle">
-          Share your referral link to earn $30 paid instantly to your wallet for every friend.
+          Share your referral link to earn $50 paid instantly to your wallet for every friend.
         </p>
       </div>
 
@@ -1680,7 +1680,10 @@ function WalletPage({
         <div className="wallet-how-it-works-card">
           <h3 className="wallet-how-it-works-title">How it works</h3>
           <p className="wallet-how-it-works-text">
-            This is your Personal Onchain Agent. ApexFlow AI lets you define Automated Tasks to buy, sell, stake or transfer assets—based on your own strategy. You can set up rules like daily staking or DCA (Dollar Cost Averaging) to accumulate tokens over time. Just define the logic, frequency, and intent — ApexFlow will execute for you. Trade smarter, let ApexFlow do the work for you while you sleep.
+            This is your Autonomous Market Strategist.
+            ApexFlow learns you - your behavior, your reactions, and your trading rhythm, and turns that into automated on-chain execution powered by evolving intelligence.
+            Set up your own logic for trading, yield strategies, or portfolio balancing, and ApexFlow adapts in real time. It interprets your intent, adjusts to market volatility, and executes precision trades while you sleep.
+            With personality modes like <b style={{ fontSize: '16px' }}>Calm Analyst</b>, <b style={{ fontSize: '16px' }}>Risk Hunter</b>, and <b style={{ fontSize: '16px' }}>Aggressive Sniper</b>, ApexFlow becomes a companion that grows smarter every day.
           </p>
           <a 
             href="https://docs.apexflow.io" 
