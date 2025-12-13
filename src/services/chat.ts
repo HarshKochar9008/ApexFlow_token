@@ -9,8 +9,10 @@ export interface ChatResponse {
   model?: string
 }
 
-// Use local proxy by default (goes through vite proxy to local server, which then calls apexflow-token)
-const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+// Use VITE_API_URL if set, otherwise use Render backend in production, or local proxy in dev
+const isProduction = import.meta.env.PROD
+const defaultApiBase = isProduction ? 'https://apexflow-token.onrender.com' : ''
+const API_BASE_URL = (import.meta.env.VITE_API_URL || defaultApiBase).replace(/\/$/, '')
 const API_URL = API_BASE_URL ? `${API_BASE_URL}/api/chat` : '/api/chat'
 
 export async function sendChatMessage(

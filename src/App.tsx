@@ -15,8 +15,10 @@ type ChatMessage = {
 }
 
 async function sendChatMessage(messages: ChatMessage[], model: string = 'gpt-4o'): Promise<{ content?: string; error?: string }> {
-  // Prefer explicit API base, otherwise use same-origin proxy (works in dev and prod)
-  const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+  // Use VITE_API_URL if set, otherwise use Render backend in production, or local proxy in dev
+  const isProduction = import.meta.env.PROD
+  const defaultApiBase = isProduction ? 'https://apexflow-token.onrender.com' : ''
+  const apiBase = (import.meta.env.VITE_API_URL || defaultApiBase).replace(/\/$/, '')
   const API_URL = apiBase ? `${apiBase}/api/chat` : '/api/chat'
   
   console.log('[Frontend] Sending chat request to:', API_URL, { messageCount: messages.length, model })
@@ -52,8 +54,24 @@ async function sendChatMessage(messages: ChatMessage[], model: string = 'gpt-4o'
     return { error: 'Invalid response format from server' }
   } catch (error) {
     console.error('[Frontend] Fetch error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to connect to chat server'
+    
+    // Provide more helpful error messages for common connection issues
+    if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError') || errorMessage.includes('Network request failed')) {
+      const isProduction = import.meta.env.PROD
+      if (isProduction) {
+        return { 
+          error: 'Connection Error: Unable to reach the chat server at https://apexflow-token.onrender.com. Please check:\n\n1. The backend service is running on Render\n2. Your internet connection\n3. Try again in a few moments if the service is starting up'
+        }
+      } else {
+        return { 
+          error: 'Connection Error: Unable to reach the chat server. Please ensure:\n\n1. The backend server is running (cd server && npm start)\n2. The server is accessible on http://localhost:3001\n3. Check your network connection\n\nIf the server is not running, start it with: cd server && npm start'
+        }
+      }
+    }
+    
     return { 
-      error: error instanceof Error ? error.message : 'Failed to connect to chat server' 
+      error: errorMessage
     }
   }
 }
@@ -334,9 +352,21 @@ function App() {
       if (result.error) {
         console.error('[Frontend] Chat error:', result.error)
         let errorContent = result.error
-        if (result.error.includes('API key') || result.error.includes('401') || result.error.includes('Unauthorized')) {
+        
+        // Handle connection errors
+        if (result.error.includes('Connection Error') || result.error.includes('Unable to reach') || result.error.includes('Failed to fetch')) {
+          errorContent = result.error // Already formatted with helpful message
+        } else if (result.error.includes('API key') || result.error.includes('401') || result.error.includes('Unauthorized')) {
           errorContent = `Authentication Error: Your OpenAI API key appears to be invalid or expired. Please check:\n\n1. Your API key in server/.env file\n2. That the key is valid and active at https://platform.openai.com/account/api-keys\n3. That your OpenAI account has available credits\n\nError details: ${result.error}`
+        } else if (result.error.includes('503') || result.error.includes('Unable to connect to chat service')) {
+          const isProduction = import.meta.env.PROD
+          if (isProduction) {
+            errorContent = `Service Unavailable: The chat service at https://apexflow-token.onrender.com is currently unavailable. Please check:\n\n1. The Render service is running and healthy\n2. Your internet connection\n3. Try again in a few moments\n\nError details: ${result.error}`
+          } else {
+            errorContent = `Service Unavailable: The chat service is currently unavailable. Please check:\n\n1. The backend server is running (cd server && npm start)\n2. The external chat API service is accessible\n3. Your internet connection\n\nError details: ${result.error}`
+          }
         }
+        
         const errorMessage: ChatMessage = {
           role: 'assistant',
           content: errorContent,
