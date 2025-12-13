@@ -22,7 +22,7 @@ const allowedOrigins = [
   'http://localhost:5174',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:3000',
-  'https://apexflowagent.com/'
+  'https://apexflowagent.com'
 ];
 
 app.use(cors({
@@ -52,10 +52,26 @@ app.use(express.json());
 app.use('/api/chat', chatRouter);
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
+  res.json({ status: 'ok', message: 'Server is running', timestamp: new Date().toISOString() });
+});
+
+// Root route for testing
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    message: 'ApexFlow API Server', 
+    endpoints: {
+      health: '/health',
+      chat: '/api/chat'
+    },
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`🚀 Server is running on http://localhost:${PORT}`);
+  console.log(`📝 Health check: http://localhost:${PORT}/health`);
+  console.log(`💬 Chat endpoint: http://localhost:${PORT}/api/chat`);
+  console.log(`🌍 Allowed origins:`, allowedOrigins);
 });
 

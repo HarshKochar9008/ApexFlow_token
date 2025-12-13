@@ -7,8 +7,8 @@ import { dirname, join } from 'path'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-// Load .env file from server directory
-dotenv.config({ path: join(__dirname, '..', '.env') })
+// Load .env file from server directory (already loaded in index.js, but keep for standalone use)
+dotenv.config({ path: join(__dirname, '.env') })
 
 const router = express.Router()
 

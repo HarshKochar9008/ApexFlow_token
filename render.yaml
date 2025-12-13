@@ -1,0 +1,20 @@
+# Render configuration for ApexFlow backend
+# This file should be at the root of your repository
+# The backend service will be deployed from the 'server' directory
+
+services:
+  - type: web
+    name: apexflow-token
+    env: node
+    rootDir: server
+    buildCommand: npm install && echo "Build complete"
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false  # IMPORTANT: Set this manually in Render dashboard
+      - key: CHAT_API_URL
+        value: https://api.openai.com/v1/chat/completions
+        required: false
+

@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: apexflow-token
+    env: node
+    buildCommand: npm install && echo "Build complete"
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false  # Set this in Render dashboard
+      - key: CHAT_API_URL
+        value: https://api.openai.com/v1/chat/completions
+        required: false
+
