@@ -12,7 +12,9 @@ export interface ChatResponse {
 // Use VITE_API_URL if set, otherwise use Render backend in production, or local proxy in dev
 const isProduction = import.meta.env.PROD
 const defaultApiBase = isProduction ? 'https://apexflow-token.onrender.com' : ''
-const API_BASE_URL = (import.meta.env.VITE_API_URL || defaultApiBase).replace(/\/$/, '')
+let API_BASE_URL = (import.meta.env.VITE_API_URL || defaultApiBase).replace(/\/$/, '')
+// Remove /api/chat if it's already in the base URL to prevent duplication
+API_BASE_URL = API_BASE_URL.replace(/\/api\/chat\/?$/, '')
 const API_URL = API_BASE_URL ? `${API_BASE_URL}/api/chat` : '/api/chat'
 
 export async function sendChatMessage(

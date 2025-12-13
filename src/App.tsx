@@ -18,7 +18,9 @@ async function sendChatMessage(messages: ChatMessage[], model: string = 'gpt-4o'
   // Use VITE_API_URL if set, otherwise use Render backend in production, or local proxy in dev
   const isProduction = import.meta.env.PROD
   const defaultApiBase = isProduction ? 'https://apexflow-token.onrender.com' : ''
-  const apiBase = (import.meta.env.VITE_API_URL || defaultApiBase).replace(/\/$/, '')
+  let apiBase = (import.meta.env.VITE_API_URL || defaultApiBase).replace(/\/$/, '')
+  // Remove /api/chat if it's already in the base URL to prevent duplication
+  apiBase = apiBase.replace(/\/api\/chat\/?$/, '')
   const API_URL = apiBase ? `${apiBase}/api/chat` : '/api/chat'
   
   console.log('[Frontend] Sending chat request to:', API_URL, { messageCount: messages.length, model })
