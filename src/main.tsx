@@ -13,7 +13,19 @@ function AppProviders({ children }: { children: ReactNode }) {
   }
 
   return (
-    <PrivyProvider appId={privyAppId} config={{ embeddedWallets: { createOnLogin: 'users-without-wallets' } }}>
+    <PrivyProvider 
+      appId={privyAppId} 
+      config={{ 
+        embeddedWallets: { 
+          createOnLogin: 'users-without-wallets' 
+        },
+        loginMethods: ['email', 'wallet', 'sms'],
+        appearance: {
+          theme: 'dark',
+          accentColor: '#a94bff',
+        }
+      }}
+    >
       <SolanaProvider>{children}</SolanaProvider>
     </PrivyProvider>
   )

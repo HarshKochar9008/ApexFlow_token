@@ -4,7 +4,7 @@ import { Zap, Rocket, Shield, BotMessageSquare, ArrowUp, ArrowRightLeft, BarChar
 const brandLogo = '/Logo.png'
 import { FaTelegramPlane } from "react-icons/fa";
 import { useWallet } from '@solana/wallet-adapter-react'
-import { useLoginWithEmail, usePrivy } from '@privy-io/react-auth'
+import { useLoginWithEmail, usePrivy, useWallets } from '@privy-io/react-auth'
 import { Keypair } from '@solana/web3.js'
 import { VolumeChart, StrategiesChart, LatencyChart, SuccessRateChart, TVLChart, CopyTradersChart } from './components/MetricsCharts'
 import { parseAutomationPrompt, type AutomationDetails } from './utils/automationParser'
@@ -62,7 +62,7 @@ async function sendChatMessage(messages: ChatMessage[], model: string = 'gpt-4o'
     if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError') || errorMessage.includes('Network request failed')) {
       const isProduction = import.meta.env.PROD
       if (isProduction) {
-        return { 
+    return { 
           error: 'Connection Error: Unable to reach the chat server at https://apexflow-token.onrender.com. Please check:\n\n1. The backend service is running on Render\n2. Your internet connection\n3. Try again in a few moments if the service is starting up'
         }
       } else {
@@ -78,11 +78,11 @@ async function sendChatMessage(messages: ChatMessage[], model: string = 'gpt-4o'
   }
 }
 
-function LoginPopup({ onClose }: { onClose: () => void }) {
+function LoginPopup({ onClose, onConnectWallet }: { onClose: () => void; onConnectWallet: () => void }) {
   return (
     <>
       <div className="login-popup-overlay" onClick={onClose} />
-      <div className="login-popup">
+      <div className="login-popup" onClick={(e) => e.stopPropagation()}>
         <div className="login-popup-header">
           <h2 className="login-popup-title">Login to ApexFlow</h2>
           <button className="login-popup-close" onClick={onClose} aria-label="Close login">
@@ -90,7 +90,22 @@ function LoginPopup({ onClose }: { onClose: () => void }) {
           </button>
         </div>
         <div className="login-popup-content">
-          <EmailLogin />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <button 
+              className="primary" 
+              onClick={onConnectWallet}
+              style={{ width: '100%', padding: '12px' }}
+            >
+              <Wallet size={18} style={{ marginRight: '8px' }} />
+              Connect Wallet
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '8px 0' }}>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />
+              <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)' }}>OR</span>
+              <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />
+            </div>
+            <EmailLogin />
+          </div>
         </div>
       </div>
     </>
@@ -149,8 +164,10 @@ function EmailLogin() {
           type="email"
           placeholder="you@example.com"
           value={email}
-          onChange={(e) => setEmail(e.currentTarget.value)}
+          onChange={(e) => setEmail(e.target.value)}
           disabled={disabled}
+          autoComplete="email"
+          onClick={(e) => e.stopPropagation()}
         />
         <button className="primary small" onClick={handleSendCode} disabled={disabled}>
           {status === 'sending' ? 'Sending...' : 'Send Code'}
@@ -160,8 +177,10 @@ function EmailLogin() {
         <input
           placeholder="6-digit code"
           value={code}
-          onChange={(e) => setCode(e.currentTarget.value)}
+          onChange={(e) => setCode(e.target.value)}
           disabled={authenticated || status === 'logging-in'}
+          autoComplete="one-time-code"
+          onClick={(e) => e.stopPropagation()}
         />
         <button className="ghost small" onClick={handleLogin} disabled={authenticated || status === 'logging-in'}>
           {status === 'logging-in' ? 'Verifying...' : 'Login'}
@@ -248,7 +267,8 @@ const heroPrompts = [
 
 function App() {
   const { connected, publicKey } = useWallet()
-  const { authenticated, logout } = usePrivy()
+  const { authenticated, logout, login, ready } = usePrivy()
+  const { wallets } = useWallets()
   const [chatInput, setChatInput] = useState('')
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
@@ -267,13 +287,19 @@ function App() {
   const [showAutomationModal, setShowAutomationModal] = useState(false)
   const isLoggedIn = connected || authenticated
 
+  // Get the primary Privy wallet (embedded or external)
+  const privyWallet = wallets.find(w => w.walletClientType === 'privy') || wallets[0]
+  const privyWalletAddress = privyWallet?.address
+
   useEffect(() => {
-    if (authenticated && !dummySolanaAccount) {
+    if (authenticated && !dummySolanaAccount && !privyWalletAddress) {
       const keypair = Keypair.generate()
       setDummySolanaAccount(keypair.publicKey.toBase58())
       setShowLoginPopup(false) // Close login popup when authenticated
+    } else if (authenticated && privyWalletAddress) {
+      setShowLoginPopup(false) // Close login popup when authenticated
     }
-  }, [authenticated, dummySolanaAccount])
+  }, [authenticated, dummySolanaAccount, privyWalletAddress])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -354,21 +380,9 @@ function App() {
       if (result.error) {
         console.error('[Frontend] Chat error:', result.error)
         let errorContent = result.error
-        
-        // Handle connection errors
-        if (result.error.includes('Connection Error') || result.error.includes('Unable to reach') || result.error.includes('Failed to fetch')) {
-          errorContent = result.error // Already formatted with helpful message
-        } else if (result.error.includes('API key') || result.error.includes('401') || result.error.includes('Unauthorized')) {
+        if (result.error.includes('API key') || result.error.includes('401') || result.error.includes('Unauthorized')) {
           errorContent = `Authentication Error: Your OpenAI API key appears to be invalid or expired. Please check:\n\n1. Your API key in server/.env file\n2. That the key is valid and active at https://platform.openai.com/account/api-keys\n3. That your OpenAI account has available credits\n\nError details: ${result.error}`
-        } else if (result.error.includes('503') || result.error.includes('Unable to connect to chat service')) {
-          const isProduction = import.meta.env.PROD
-          if (isProduction) {
-            errorContent = `Service Unavailable: The chat service at https://apexflow-token.onrender.com is currently unavailable. Please check:\n\n1. The Render service is running and healthy\n2. Your internet connection\n3. Try again in a few moments\n\nError details: ${result.error}`
-          } else {
-            errorContent = `Service Unavailable: The chat service is currently unavailable. Please check:\n\n1. The backend server is running (cd server && npm start)\n2. The external chat API service is accessible\n3. Your internet connection\n\nError details: ${result.error}`
-          }
         }
-        
         const errorMessage: ChatMessage = {
           role: 'assistant',
           content: errorContent,
@@ -410,20 +424,41 @@ function App() {
     await sendMessage(prompt)
   }
 
+  const getFullAddress = () => {
+    // Priority: Solana wallet > Privy wallet > dummy Solana account > fallback
+    if (connected && publicKey) return publicKey.toBase58()
+    if (privyWalletAddress) return privyWalletAddress
+    if (dummySolanaAccount) return dummySolanaAccount
+    return '0x2CeE6edF5b6F42d9Cf853b16EA717aA6C9833F21'
+  }
+
   const getDisplayAddress = () => {
-    if (connected && publicKey) return `${publicKey.toBase58().slice(0, 6)}...${publicKey.toBase58().slice(-4)}`
-    if (dummySolanaAccount) return `${dummySolanaAccount.slice(0, 6)}...${dummySolanaAccount.slice(-4)}`
-    return '0x2CeE...3F21'
+    const fullAddress = getFullAddress()
+    if (fullAddress.length > 10) {
+      return `${fullAddress.slice(0, 6)}...${fullAddress.slice(-4)}`
+    }
+    return fullAddress
   }
 
   const handleCopyAddress = async () => {
     try {
-      const address = getDisplayAddress()
+      const address = getFullAddress()
       if (navigator?.clipboard) {
         await navigator.clipboard.writeText(address)
       }
     } catch (err) {
       console.error('Failed to copy address', err)
+    }
+  }
+
+  const handleConnectWallet = async () => {
+    try {
+      if (ready && login) {
+        // Privy login will show wallet connection options
+        await login()
+      }
+    } catch (err) {
+      console.error('Failed to connect wallet', err)
     }
   }
 
@@ -818,7 +853,7 @@ function App() {
 
         {/* Login Popup Modal */}
         {showLoginPopup && (
-          <LoginPopup onClose={closeLoginPopup} />
+          <LoginPopup onClose={closeLoginPopup} onConnectWallet={handleConnectWallet} />
         )}
 
         {/* Automation Confirmation Modal */}
@@ -998,9 +1033,24 @@ function ProfilePage({ onNavigate, onLogout, getDisplayAddress, authenticated }:
   getDisplayAddress: () => string
   authenticated: boolean
 }) {
+  const { wallets } = useWallets()
+  const { connected, publicKey } = useWallet()
+  
+  // Get the primary Privy wallet (embedded or external)
+  const privyWallet = wallets.find(w => w.walletClientType === 'privy') || wallets[0]
+  const privyWalletAddress = privyWallet?.address
+
+  const getFullAddress = () => {
+    // Priority: Solana wallet > Privy wallet > fallback (display address)
+    if (connected && publicKey) return publicKey.toBase58()
+    if (privyWalletAddress) return privyWalletAddress
+    // Fallback to display address if no wallet connected
+    return getDisplayAddress().replace('...', '') // Remove ellipsis if present
+  }
+
   const handleCopyAddress = async () => {
     try {
-      const address = getDisplayAddress()
+      const address = getFullAddress()
       if (navigator?.clipboard) {
         await navigator.clipboard.writeText(address)
       }
@@ -1605,14 +1655,21 @@ function WalletPage({
   publicKey: any
   dummySolanaAccount: string | null
 }) {
+  const { wallets } = useWallets()
   const [activeTab, setActiveTab] = useState<'assets' | 'transactions' | 'credits'>('assets')
   const [portfolioValue] = useState(0)
   const [portfolioChange] = useState(0)
   const [credits] = useState(1000)
   const [copied, setCopied] = useState(false)
 
+  // Get the primary Privy wallet (embedded or external)
+  const privyWallet = wallets.find(w => w.walletClientType === 'privy') || wallets[0]
+  const privyWalletAddress = privyWallet?.address
+
   const getFullAddress = () => {
+    // Priority: Solana wallet > Privy wallet > dummy Solana account > fallback
     if (connected && publicKey) return publicKey.toBase58()
+    if (privyWalletAddress) return privyWalletAddress
     if (dummySolanaAccount) return dummySolanaAccount
     return '0x2CeE6edF5b6F42d9Cf853b16EA717aA6C9833F21'
   }
@@ -1832,7 +1889,6 @@ function MarketplacePage() {
       description: 'ApexFlow analyzes market narratives, deep liquidity signals, behavioral sentiment, and on-chain patterns to detect alpha before it surfaces publicly. It\'s your evolving intelligence engine—ask it for breakout forecasts, reversal cues, or narrative rotations. Combine its insights with your trading modes for unmatched conviction.',
       status: 'available',
       actionText: 'Try it now',
-      url: 'https://x.com/aixbt_agent'
     },
     {
       id: 'sentra-ai',
@@ -1844,7 +1900,6 @@ function MarketplacePage() {
       description: 'Sentra AI monitors global news, social sentiment, regulatory developments, and AI-scored market tone in real time. It helps you understand when momentum is shifting, when fear is rising, and when opportunity windows open. Use it to inject sentiment awareness into your trading logic or receive alerts when market psychology changes.',
       status: 'available',
       actionText: 'Try it now',
-      url: 'https://iamgloria.com/'
     },
     {
       id: 'vortexx',
@@ -1856,7 +1911,6 @@ function MarketplacePage() {
       description: 'VortexX delivers next-generation technical intelligence—volatility mapping, momentum curves, liquidity stress signals, and high-resolution support/resistance modeling. Ask it for setups on any token or pair. Its intelligence evolves with your strategy, optimizing entries and exits with precision.',
       status: 'available',
       actionText: 'Try it now',
-      url: 'https://x.com/Loky_AI'
     },
     {
       id: 'whalematrix',
@@ -1868,19 +1922,17 @@ function MarketplacePage() {
       description: 'WhaleMatrix tracks deep-wallet movements, staking waves, institutional rotations, and cluster behavior across chains—in real time. Detect where big capital is shifting before the crowd moves. Use it to validate trade ideas, anticipate market rotations, or catch early signals from macro on-chain shifts.',
       status: 'available',
       actionText: 'Try it now',
-      url: 'https://x.com/WhaleintelAI'
     },
     // Available Plugins
     {
-      id: 'coinpulse',
-      name: 'CoinPulse',
+      id: 'coingecko',
+      name: 'CoinGecko',
       type: 'plugin',
       icon: '/coingecko.png',
       categories: ['Market Insights'],
-      description: 'CoinPulse provides trusted, real-time pricing, volume flows, volatility snapshots, and market-cap movements. Use it to stay synced with high-velocity market data and uncover assets gaining strength before they trend globally.',
+      description: 'CoinGecko provides trusted, real-time pricing, volume flows, volatility snapshots, and market-cap movements. Use it to stay synced with high-velocity market data and uncover assets gaining strength before they trend globally.',
       status: 'available',
       actionText: 'Try it now',
-      url: 'https://www.coingecko.com'
     },
     {
       id: 'pathzero',
@@ -1891,7 +1943,6 @@ function MarketplacePage() {
       description: 'PathZero is your frictionless routing engine—executing swaps across liquidity layers with optimized price impact and minimal slippage. Let your agent perform precision trades backed by dynamic routing intelligence.',
       status: 'available',
       actionText: 'Try it now',
-      url: 'https://0x.org'
     },
     // Coming Soon Plugins
     {
