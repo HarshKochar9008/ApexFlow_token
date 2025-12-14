@@ -1,12 +1,9 @@
 import { AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 const volumeData = [
-  { month: 'Jun', volume: 5.2 },
-  { month: 'Jul', volume: 6.8 },
-  { month: 'Aug', volume: 7.1 },
-  { month: 'Sep', volume: 7.5 },
-  { month: 'Oct', volume: 7.8 },
-  { month: 'Nov', volume: 8.2 },
+  { month: 'Sep', volume: 2.5 },
+  { month: 'Oct', volume: 2.8 },
+  { month: 'Nov', volume: 11.2 },
 ]
 
 const strategiesData = [
@@ -40,10 +37,10 @@ const tvlData = [
 ]
 
 const copyTradersData = [
-  { week: 'W1', traders: 7200 },
-  { week: 'W2', traders: 7800 },
-  { week: 'W3', traders: 8400 },
-  { week: 'W4', traders: 9018 },
+  { week: 'W1', traders: 20 },
+  { week: 'W2', traders: 70 },
+  { week: 'W3', traders: 40 },
+  { week: 'W4', traders: 108 },
 ]
 
 export function VolumeChart() {
@@ -164,13 +161,27 @@ export function TVLChart() {
 }
 
 export function CopyTradersChart() {
+  // Generate ticks at 50 intervals from 0 to 200
+  const generateTicks = () => {
+    const ticks = []
+    for (let i = 0; i <= 200; i += 50) {
+      ticks.push(i)
+    }
+    return ticks
+  }
+
   return (
     <div className="chart-container">
       <ResponsiveContainer width="100%" height={250}>
         <BarChart data={copyTradersData}>
           <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
           <XAxis dataKey="week" stroke="#9ca3af" fontSize={12} />
-          <YAxis stroke="#9ca3af" fontSize={12} />
+          <YAxis 
+            stroke="#9ca3af" 
+            fontSize={12}
+            domain={[0, 200]}
+            ticks={generateTicks()}
+          />
           <Tooltip 
             contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
             labelStyle={{ color: '#f3f4f6' }}

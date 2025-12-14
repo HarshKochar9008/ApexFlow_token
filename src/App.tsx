@@ -4,7 +4,7 @@ import { Zap, Rocket, Shield, BotMessageSquare, ArrowUp, ArrowRightLeft, BarChar
 const brandLogo = '/Logo.png'
 import { FaTelegramPlane } from "react-icons/fa";
 import { useWallet } from '@solana/wallet-adapter-react'
-import { useLoginWithEmail, usePrivy, useWallets } from '@privy-io/react-auth'
+import { useLoginWithEmail, usePrivy, useWallets, useLinkAccount } from '@privy-io/react-auth'
 import { Keypair } from '@solana/web3.js'
 import { VolumeChart, StrategiesChart, LatencyChart, SuccessRateChart, TVLChart, CopyTradersChart } from './components/MetricsCharts'
 import { parseAutomationPrompt, type AutomationDetails } from './utils/automationParser'
@@ -78,13 +78,13 @@ async function sendChatMessage(messages: ChatMessage[], model: string = 'gpt-4o'
   }
 }
 
-function LoginPopup({ onClose, onConnectWallet }: { onClose: () => void; onConnectWallet: () => void }) {
+function LoginPopup({ onClose, onConnectWallet, authenticated }: { onClose: () => void; onConnectWallet: () => void; authenticated?: boolean }) {
   return (
     <>
       <div className="login-popup-overlay" onClick={onClose} />
       <div className="login-popup" onClick={(e) => e.stopPropagation()}>
         <div className="login-popup-header">
-          <h2 className="login-popup-title">Login to ApexFlow</h2>
+          <h2 className="login-popup-title">{authenticated ? 'Connect Wallet' : 'Login to ApexFlow'}</h2>
           <button className="login-popup-close" onClick={onClose} aria-label="Close login">
             <X size={20} />
           </button>
@@ -97,7 +97,7 @@ function LoginPopup({ onClose, onConnectWallet }: { onClose: () => void; onConne
               style={{ width: '100%', padding: '12px' }}
             >
               <Wallet size={18} style={{ marginRight: '8px' }} />
-              Connect Wallet
+              {authenticated ? 'Link Additional Wallet' : 'Connect Wallet'}
             </button>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '8px 0' }}>
               <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }} />
@@ -269,6 +269,7 @@ function App() {
   const { connected, publicKey } = useWallet()
   const { authenticated, logout, login, ready } = usePrivy()
   const { wallets } = useWallets()
+  const { linkWallet } = useLinkAccount()
   const [chatInput, setChatInput] = useState('')
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
@@ -288,7 +289,11 @@ function App() {
   const isLoggedIn = connected || authenticated
 
   // Get the primary Privy wallet (embedded or external)
-  const privyWallet = wallets.find(w => w.walletClientType === 'privy') || wallets[0]
+  // Prioritize external wallets (metamask, walletconnect, etc.) over embedded privy wallet
+  const privyWallet = wallets.find(w => w.walletClientType !== 'privy' && w.address) || 
+                      wallets.find(w => w.walletClientType === 'privy' && w.address) || 
+                      wallets.find(w => w.address) ||
+                      wallets[0]
   const privyWalletAddress = privyWallet?.address
 
   useEffect(() => {
@@ -453,7 +458,12 @@ function App() {
 
   const handleConnectWallet = async () => {
     try {
-      if (ready && login) {
+      if (!ready) return
+      
+      // If user is already authenticated, link a new wallet instead of logging in
+      if (authenticated) {
+        await linkWallet()
+      } else if (login) {
         // Privy login will show wallet connection options
         await login()
       }
@@ -620,7 +630,7 @@ function App() {
               </a>
               <a
                 className="community-link community-link-gitbook"
-                href="https://docs.apexflow.io"
+                href="https://apexflow.gitbook.io/apexflow-docs/~/changes/2/"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Gitbook"
@@ -658,11 +668,13 @@ function App() {
               </button>
               {showProfilePopup && (
                 <ProfilePopup 
+                  key={getFullAddress()}
                   onClose={() => setShowProfilePopup(false)}
                   onNavigateToProfile={handleNavigateToProfile}
                   onNavigateToPricing={() => { setShowProfilePopup(false); setPage('pricing'); }}
                   onLogout={() => { setShowProfilePopup(false); logout(); }}
                   getDisplayAddress={getDisplayAddress}
+                  getFullAddress={getFullAddress}
                   handleCopyAddress={handleCopyAddress}
                 />
               )}
@@ -689,11 +701,13 @@ function App() {
                   </button>
                   {showProfilePopup && (
                     <ProfilePopup 
+                      key={getFullAddress()}
                       onClose={() => setShowProfilePopup(false)}
                       onNavigateToProfile={handleNavigateToProfile}
                       onNavigateToPricing={() => { setShowProfilePopup(false); setPage('pricing'); }}
                       onLogout={() => { setShowProfilePopup(false); logout(); }}
                       getDisplayAddress={getDisplayAddress}
+                      getFullAddress={getFullAddress}
                       handleCopyAddress={handleCopyAddress}
                     />
                   )}
@@ -853,7 +867,7 @@ function App() {
 
         {/* Login Popup Modal */}
         {showLoginPopup && (
-          <LoginPopup onClose={closeLoginPopup} onConnectWallet={handleConnectWallet} />
+          <LoginPopup onClose={closeLoginPopup} onConnectWallet={handleConnectWallet} authenticated={authenticated} />
         )}
 
         {/* Automation Confirmation Modal */}
@@ -886,6 +900,7 @@ function ProfilePopup({
   onNavigateToPricing, 
   onLogout, 
   getDisplayAddress, 
+  getFullAddress,
   handleCopyAddress
 }: {
   onClose: () => void
@@ -893,8 +908,25 @@ function ProfilePopup({
   onNavigateToPricing: () => void
   onLogout: () => void
   getDisplayAddress: () => string
+  getFullAddress: () => string
   handleCopyAddress: () => void
 }) {
+  const fullAddress = getFullAddress()
+  const displayAddress = getDisplayAddress()
+  // Show full address by default if it's a real wallet address (not the fallback)
+  const isRealWallet = fullAddress && fullAddress !== '0x2CeE6edF5b6F42d9Cf853b16EA717aA6C9833F21'
+  const [showFullAddress, setShowFullAddress] = useState(() => {
+    // Initialize based on whether we have a real wallet address
+    return isRealWallet
+  })
+  
+  // Update state when wallet address changes to show full address for new connections
+  useEffect(() => {
+    if (isRealWallet && !showFullAddress) {
+      setShowFullAddress(true)
+    }
+  }, [fullAddress])
+  
   return (
     <>
       <div className="profile-popup-overlay" onClick={onClose} />
@@ -912,12 +944,20 @@ function ProfilePopup({
         <div className="profile-popup-content">
           <div className="profile-popup-wallet-info">
             <Wallet size={16} className="wallet-icon-small" />
-            <div className="profile-popup-wallet-details">
-              <span className="profile-popup-wallet-address">{getDisplayAddress()}</span>
+            <div className="profile-popup-wallet-details" style={{ flex: 1 }}>
+              <span 
+                className="profile-popup-wallet-address" 
+                onClick={() => setShowFullAddress(!showFullAddress)}
+                style={{ cursor: 'pointer', wordBreak: 'break-all', userSelect: 'text' }}
+                title={showFullAddress ? 'Click to collapse' : 'Click to show full address'}
+              >
+                {showFullAddress ? fullAddress : displayAddress}
+              </span>
               <button 
                 className="profile-popup-copy-btn" 
                 onClick={handleCopyAddress}
                 aria-label="Copy address"
+                title="Copy full address"
               >
                 <Copy size={14} />
               </button>

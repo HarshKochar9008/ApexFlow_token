@@ -3,30 +3,15 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { SolanaProvider } from './solana/SolanaProvider'
-import { PrivyProvider } from '@privy-io/react-auth'
-
-const privyAppId = import.meta.env.VITE_PRIVY_APP_ID ?? 'demo-app-id'
+import { EVMProvider } from './evm/EVMProvider'
+import { PrivyProvider } from './privy/PrivyProvider'
 
 function AppProviders({ children }: { children: ReactNode }) {
-  if (!import.meta.env.VITE_PRIVY_APP_ID) {
-    console.warn('VITE_PRIVY_APP_ID not set; using demo-app-id. Add your real Privy app ID to enable auth.')
-  }
-
   return (
-    <PrivyProvider 
-      appId={privyAppId} 
-      config={{ 
-        embeddedWallets: { 
-          createOnLogin: 'users-without-wallets' 
-        },
-        loginMethods: ['email', 'wallet', 'sms'],
-        appearance: {
-          theme: 'dark',
-          accentColor: '#a94bff',
-        }
-      }}
-    >
-      <SolanaProvider>{children}</SolanaProvider>
+    <PrivyProvider>
+      <EVMProvider>
+        <SolanaProvider>{children}</SolanaProvider>
+      </EVMProvider>
     </PrivyProvider>
   )
 }
