@@ -920,7 +920,6 @@ function ProfilePopup({
     return isRealWallet
   })
   
-  // Update state when wallet address changes to show full address for new connections
   useEffect(() => {
     if (isRealWallet && !showFullAddress) {
       setShowFullAddress(true)
