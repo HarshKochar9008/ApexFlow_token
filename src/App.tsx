@@ -630,7 +630,7 @@ function App() {
               </a>
               <a
                 className="community-link community-link-gitbook"
-                href="https://apexflow.gitbook.io/apexflow-docs/~/changes/2/"
+                href="https://docs.google.com/document/d/1G9XSMf77boaeMA59EZkd8PzU4TtW6d3EMLLYkCXJHb0/edit?usp=sharing"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Gitbook"
