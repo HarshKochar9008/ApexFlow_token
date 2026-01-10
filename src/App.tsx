@@ -8,6 +8,7 @@ import { useLoginWithEmail, usePrivy, useWallets, useLinkAccount } from '@privy-
 import { Keypair } from '@solana/web3.js'
 import { VolumeChart, StrategiesChart, LatencyChart, SuccessRateChart, TVLChart, CopyTradersChart } from './components/MetricsCharts'
 import { parseAutomationPrompt, type AutomationDetails } from './utils/automationParser'
+import { SentimentAnalysisPage } from './components/SentimentAnalysisPage'
 
 type ChatMessage = {
   role: 'user' | 'assistant'
@@ -193,7 +194,7 @@ function EmailLogin() {
   )
 }
 
-type Page = 'terminal' | 'metrics' | 'pricing' | 'profile' | 'automations' | 'refer' | 'wallet' | 'marketplace'
+type Page = 'terminal' | 'metrics' | 'pricing' | 'profile' | 'automations' | 'refer' | 'wallet' | 'marketplace' | 'sentiment'
 
 type PricingPlan = {
   name: string
@@ -544,6 +545,17 @@ function App() {
               <Zap size={16} />
               <span>Automations</span>
             </button>
+            <button
+              className={`side-link ${page === 'sentiment' ? 'active' : ''}`}
+              onClick={() => {
+                setPage('sentiment')
+                setIsSidebarOpen(false)
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <TrendingUp size={16} />
+              <span>Sentiment Analysis</span>
+            </button>
           </div>
           <div className="side-group">
             <p className="side-label">
@@ -581,10 +593,10 @@ function App() {
               }}
               style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
             >
-              
+              <BarChart3 size={16} />
               <span>Metrics</span>
               <span className="side-link-badge" style={{ marginLeft: 'auto' }}>
-              <Flame size={14} style={{ color: '#f97316' }} />
+                <Flame size={14} style={{ color: '#f97316' }} />
                 <span style={{ fontSize: '11px', color: '#f97316' }}>New</span>
               </span>
             </button>
@@ -802,6 +814,10 @@ function App() {
                   <Zap size={16} />
                   Automations
                 </button>
+                <button className="terminal-automations-btn" onClick={() => setPage('sentiment')}>
+                  <TrendingUp size={16} />
+                  Sentiment
+                </button>
                 <textarea
                   className="terminal-input"
                   value={chatInput}
@@ -835,35 +851,38 @@ function App() {
         {page === 'profile' && <ProfilePage onNavigate={setPage} onLogout={logout} getDisplayAddress={getDisplayAddress} authenticated={authenticated} />}
         {page === 'refer' && <ReferEarnPage />}
         {page === 'marketplace' && <MarketplacePage />}
+        {page === 'sentiment' && <SentimentAnalysisPage />}
 
-        <div className="chat-input-bar mobile-input">
-          <button className="mobile-input-action" onClick={() => setPage('automations')}>
-            <Zap size={16} />
-            Automations
-          </button>
-          <div className="chat-input-bar-input">
-            <textarea
-              value={chatInput}
-              onChange={(e) => setChatInput(e.currentTarget.value)}
-              placeholder={isLoggedIn ? 'What I can do for you today...?' : 'You can chat now — connect to save & personalize.'}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSend()
-                }
-              }}
+        {page === 'terminal' && (
+          <div className="chat-input-bar mobile-input">
+            <button className="mobile-input-action" onClick={() => setPage('automations')}>
+              <Zap size={16} />
+              Automations
+            </button>
+            <div className="chat-input-bar-input">
+              <textarea
+                value={chatInput}
+                onChange={(e) => setChatInput(e.currentTarget.value)}
+                placeholder={isLoggedIn ? 'What I can do for you today...?' : 'You can chat now — connect to save & personalize.'}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSend()
+                  }
+                }}
+                disabled={isSending}
+                rows={1}
+              />
+            </div>
+            <button
+              className="mobile-send-btn"
+              onClick={handleSend}
               disabled={isSending}
-              rows={1}
-            />
+            >
+              <ArrowUp size={18} />
+            </button>
           </div>
-          <button 
-            className="mobile-send-btn" 
-            onClick={handleSend} 
-            disabled={isSending}
-          >
-            <ArrowUp size={18} />
-          </button>
-        </div>
+        )}
 
         {/* Login Popup Modal */}
         {showLoginPopup && (
