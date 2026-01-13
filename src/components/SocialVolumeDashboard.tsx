@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useMemo } from 'react'
-import { Share2, Link2, Settings, Eye, EyeOff, X, Calendar } from 'lucide-react'
+import { useEffect, useState, useMemo } from 'react'
+import { Share2, Link2, Settings, Eye, EyeOff, Calendar } from 'lucide-react'
 import { Bar, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from 'recharts'
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from '@/components/ui/chart'
 
