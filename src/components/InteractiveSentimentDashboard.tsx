@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Brush, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from 'recharts'
-import { X, Lock, TrendingUp } from 'lucide-react'
+import { X, Lock, TrendingUp, Share2, Link2, Settings } from 'lucide-react'
 import { type TrendingStory } from '../services/sentimentAnalysis'
 import { SentimentGauge } from './SentimentGauge'
 import { SocialVolumePriceChart } from './SocialVolumePriceChart'
@@ -92,6 +92,23 @@ function resampleLinear(values: number[], newLen: number) {
 function formatTimeLabel(d: Date, timeframe: Timeframe) {
   if (timeframe === '7D') return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
   return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+}
+
+function formatDateRangeLabel(timeframe: Timeframe) {
+  const end = new Date()
+  const start = new Date(end)
+  if (timeframe === '4h') start.setHours(end.getHours() - 4)
+  if (timeframe === '1D') start.setDate(end.getDate() - 1)
+  if (timeframe === '7D') start.setDate(end.getDate() - 7)
+
+  const fmt: Intl.DateTimeFormatOptions =
+    timeframe === '7D'
+      ? { month: '2-digit', day: '2-digit', year: '2-digit' }
+      : { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }
+
+  const startLabel = start.toLocaleString(undefined, fmt).replace(',', '')
+  const endLabel = end.toLocaleString(undefined, fmt).replace(',', '')
+  return `${startLabel} - ${endLabel}`
 }
 
 function buildInitialSeries({
@@ -186,6 +203,7 @@ export function InteractiveSentimentDashboard({ story, onClose, isUnlocked }: In
   const [asset, setAsset] = useState<Asset>('BTC')
   const [showSentimentOverlay, setShowSentimentOverlay] = useState(true)
   const [isBlinking, setIsBlinking] = useState(false)
+  const [showUpgradeGate, setShowUpgradeGate] = useState(!isUnlocked)
 
   const [series, setSeries] = useState<DashboardPoint[]>(() =>
     buildInitialSeries({ seedKey: `${story.id}:7D:BTC`, timeframe: '7D', asset: 'BTC', story })
@@ -194,6 +212,10 @@ export function InteractiveSentimentDashboard({ story, onClose, isUnlocked }: In
   useEffect(() => {
     setSeries(buildInitialSeries({ seedKey: `${story.id}:${timeframe}:${asset}`, timeframe, asset, story }))
   }, [asset, story, timeframe])
+
+  useEffect(() => {
+    setShowUpgradeGate(!isUnlocked)
+  }, [isUnlocked, story.id])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -226,6 +248,8 @@ export function InteractiveSentimentDashboard({ story, onClose, isUnlocked }: In
     sentiment: { label: 'Sentiment', color: 'rgba(200, 240, 46, 0.95)' },
   }
 
+  const dateRangeLabel = useMemo(() => formatDateRangeLabel(timeframe), [timeframe])
+
   return (
     <>
       <div className="dashboard-overlay" onClick={onClose} />
@@ -233,13 +257,13 @@ export function InteractiveSentimentDashboard({ story, onClose, isUnlocked }: In
         <div className="dashboard-header">
           <div>
             <h2 className="dashboard-title">{story.title}</h2>
-            <p className="dashboard-subtitle">Interactive Sentiment Dashboard</p>
+            <p className="dashboard-subtitle">Sentiment Dashboard</p>
           </div>
           <button className="dashboard-close-btn" onClick={onClose} aria-label="Close dashboard">
             <X size={18} />
           </button>
         </div>
-
+ 
         <div className="dashboard-content">
           <div className="dashboard-section">
             <div className="dashboard-section-header">
@@ -260,11 +284,42 @@ export function InteractiveSentimentDashboard({ story, onClose, isUnlocked }: In
                   ))}
                 </div>
 
+                <div className="dashboard-date-range" aria-label="Date range">
+                  {dateRangeLabel}
+                </div>
+
                 <select className="asset-select" value={asset} onChange={(e) => setAsset(e.target.value as Asset)}>
                   <option value="BTC">BTC</option>
                   <option value="ETH">ETH</option>
                   <option value="SOL">SOL</option>
                 </select>
+
+                <button
+                  className="dashboard-icon-btn"
+                  onClick={() => alert('Share flow coming soon')}
+                  type="button"
+                  aria-label="Share"
+                >
+                  <Share2 size={16} />
+                </button>
+
+                <button
+                  className="dashboard-icon-btn"
+                  onClick={() => navigator.clipboard?.writeText(window.location.href)}
+                  type="button"
+                  aria-label="Copy link"
+                >
+                  <Link2 size={16} />
+                </button>
+
+                <button
+                  className="dashboard-icon-btn"
+                  onClick={() => alert('Settings coming soon')}
+                  type="button"
+                  aria-label="Settings"
+                >
+                  <Settings size={16} />
+                </button>
 
                 <label className="overlay-toggle">
                   <input
@@ -325,9 +380,11 @@ export function InteractiveSentimentDashboard({ story, onClose, isUnlocked }: In
                     <Brush dataKey="label" height={22} stroke="rgba(200, 240, 46, 0.6)" travellerWidth={10} />
                   </ComposedChart>
                 </ChartContainer>
+
+                {!isUnlocked && <div className="chart-watermark">Sentiment.</div>}
               </div>
 
-              {!isUnlocked && (
+              {!isUnlocked && !showUpgradeGate && (
                 <div className="locked-overlay" aria-hidden="true">
                   <Lock size={22} />
                   <p>Stake XFLOW for full data</p>
@@ -362,7 +419,7 @@ export function InteractiveSentimentDashboard({ story, onClose, isUnlocked }: In
                 })}
               </div>
 
-              {!isUnlocked && (
+              {!isUnlocked && !showUpgradeGate && (
                 <div className="locked-overlay" aria-hidden="true">
                   <Lock size={22} />
                   <p>Stake XFLOW for full data</p>
@@ -371,7 +428,7 @@ export function InteractiveSentimentDashboard({ story, onClose, isUnlocked }: In
             </div>
           </div>
 
-          {!isUnlocked && (
+          {!isUnlocked && !showUpgradeGate && (
             <div className="staking-cta-section">
               <div className="staking-cta-content">
                 <h3 className="staking-cta-title">Stake XFLOW for full data</h3>
@@ -386,6 +443,29 @@ export function InteractiveSentimentDashboard({ story, onClose, isUnlocked }: In
             </div>
           )}
         </div>
+
+        {!isUnlocked && showUpgradeGate && (
+          <div className="upgrade-gate-overlay" role="dialog" aria-modal="true" aria-label="Upgrade for full data">
+            <div className="upgrade-gate-card" onClick={(e) => e.stopPropagation()}>
+              <div className="upgrade-gate-title">Upgrade For Full Data</div>
+              <div className="upgrade-gate-subtitle">Your plan has limited data period for:</div>
+              <ul className="upgrade-gate-list">
+                <li>Social Volume ({dateRangeLabel})</li>
+                <li>Social Dominance, Platform splits, and predictive signals</li>
+              </ul>
+              <div className="upgrade-gate-internal">
+                ApexFlow Sentiment Prediction converts social + price data into a live, animated trading signal with gated
+                premium analytics unlocked via XFLOW staking.
+              </div>
+              <button className="upgrade-gate-upgrade-btn" onClick={() => alert('Upgrade flow coming soon')} type="button">
+                Upgrade
+              </button>
+              <button className="upgrade-gate-hide-btn" onClick={() => setShowUpgradeGate(false)} type="button">
+                Hide Pro Metrics
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </>
   )

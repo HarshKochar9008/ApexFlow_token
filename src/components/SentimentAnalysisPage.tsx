@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef } from 'react'
-import { Clock, ChevronLeft, ChevronRight, Calendar, Share2, Link2, ExternalLink, X, Plus, ChevronDown } from 'lucide-react'
+import { Clock, ChevronLeft, ChevronRight, Calendar, Share2, Link2, ExternalLink, X, Plus, ChevronDown, BarChart3 } from 'lucide-react'
 import { getTrendingStories, formatTimeAgo, type TrendingStory } from '../services/sentimentAnalysis'
 import { SentimentGauge } from './SentimentGauge'
 import { SocialVolumeChart } from './SocialVolumeChart'
 import { AIPredictionComponent } from './AIPrediction'
 import { InteractiveSentimentDashboard } from './InteractiveSentimentDashboard'
+import { SocialVolumeDashboard } from './SocialVolumeDashboard'
 
 export function SentimentAnalysisPage() {
   const [stories, setStories] = useState<TrendingStory[]>([])
@@ -15,6 +16,7 @@ export function SentimentAnalysisPage() {
   const [isUnlocked] = useState(false) // TODO: Check if user has staked XFLOW
   const [showSuggestModal, setShowSuggestModal] = useState(false)
   const [showDateDropdown, setShowDateDropdown] = useState(false)
+  const [showSocialVolumeDashboard, setShowSocialVolumeDashboard] = useState(false)
   const dateDropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -142,6 +144,17 @@ export function SentimentAnalysisPage() {
   return (
     <div className="sentiment-analysis-page">
       <div className="sentiment-header-section">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#fff', margin: 0 }}>Sentiment Analysis</h2>
+          <button 
+            className="sentiment-action-btn primary" 
+            onClick={() => setShowSocialVolumeDashboard(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
+            <BarChart3 size={16} />
+            View Social Volume Dashboard
+          </button>
+        </div>
         <p className="sentiment-header-description">
           Explore the most talked-about stories making waves on social media in the past 24 hours is ideal for spotting
           hot topics and staying in the loop with crypto market buzz.
@@ -278,7 +291,6 @@ export function SentimentAnalysisPage() {
               {/* Right Column: Sentiment Gauge */}
               <div className="story-right-column">
                 <div className="sentiment-gauge-card">
-                  <div className="sentiment-gauge-card-kicker">SENTIMENT</div>
                   <div className="sentiment-gauge-card-title">SENTIMENT</div>
                   <SentimentGauge sentiment={story.sentiment} size={210} />
                 </div>
@@ -290,6 +302,9 @@ export function SentimentAnalysisPage() {
 
       {/* Interactive Sentiment Dashboard Modal */}
       {dashboardStory && <InteractiveSentimentDashboard story={dashboardStory} onClose={() => setDashboardStory(null)} isUnlocked={isUnlocked} />}
+
+      {/* Social Volume Dashboard Modal */}
+      {showSocialVolumeDashboard && <SocialVolumeDashboard isUnlocked={isUnlocked} onClose={() => setShowSocialVolumeDashboard(false)} />}
 
       {/* Suggest Account Modal */}
       {showSuggestModal && <SuggestAccountModal onClose={() => setShowSuggestModal(false)} />}

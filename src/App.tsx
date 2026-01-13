@@ -250,17 +250,17 @@ const pricingPlans: PricingPlan[] = [
 ] as const
 
 const metricCards: MetricCard[] = [
-  { label: 'Monthly Volume', value: '8.2M', change: '+12.4%' },
-  { label: 'Strategies Live', value: '300', change: '+4.2%' },
-  { label: 'Success Rate', value: '91.3%', change: '+0.8%' },
-  { label: 'Avg. Latency', value: '148 ms', change: '-3.1%' },
-  { label: 'TVL Managed', value: '$3.24M', change: '+9.5%' },
-  { label: 'Copy Traders', value: '9,018', change: '+6.3%' },
+  { label: 'Monthly Volume', value: '25M', change: '+12.4%' },
+  { label: 'Strategies Live', value: '1000', change: '+4.2%' },
+  { label: 'Success Rate', value: '95.3%', change: '+0.8%' },
+  { label: 'Avg. Latency', value: '130 ms', change: '-3.1%' },
+  { label: 'TVL Managed', value: '8.12M', change: '+9.5%' },
+  { label: 'Copy Traders', value: '11,057', change: '+6.3%' },
 ]
 
 const heroPrompts = [
-  { icon: Rocket, text: '"Hey APEX, buy me 1000$ of APEX"' },
-  { icon: ArrowRightLeft, text: '"Automate DCA 50$ of APEX every day. Stop after spending 1000$"' },
+  { icon: Rocket, text: '"Hey APEX, buy me 1000$ of SOL"' },
+  { icon: ArrowRightLeft, text: '"Automate DCA 50$ of JUP every day. Stop after spending 1000$"' },
   { icon: Shield, text: '"Give me trending coins last 24h from Coingecko"' },
   { icon: BotMessageSquare, text: '"If 15min RSI on FACY is below 30, buy it. Sell 50% when 10x from first buy"' },
   { icon: Zap, text: '"Check every 4 hours if WIRE is down at least 10% last day, then buy 500$"' },
@@ -2082,7 +2082,7 @@ function MarketplacePage() {
             {isHovering && (
               <div className="marketplace-animation-overlay">
                 <div className="marketplace-animation-text">
-                  Stake $APEX to use all plugins and agents
+                  Stake $XFLOW to use all plugins and agents
                 </div>
               </div>
             )}

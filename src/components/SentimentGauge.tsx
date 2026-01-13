@@ -1,4 +1,4 @@
-import { useId, useMemo } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { Info } from 'lucide-react'
 import { getSentimentDisplay, type SentimentLevel } from '../services/sentimentAnalysis'
 
@@ -29,6 +29,12 @@ function describeArc(cx: number, cy: number, r: number, startAngle: number, endA
 export function SentimentGauge({ sentiment, size = 200, isBlinking = false }: SentimentGaugeProps) {
   const display = getSentimentDisplay(sentiment.level)
   const uid = useId().replace(/:/g, '')
+  const [isNeedleWiggling, setIsNeedleWiggling] = useState(false)
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setIsNeedleWiggling(true), 3000)
+    return () => window.clearTimeout(t)
+  }, [])
 
   const dims = useMemo(() => {
     const w = size
@@ -87,24 +93,29 @@ export function SentimentGauge({ sentiment, size = 200, isBlinking = false }: Se
 
         {/* Needle */}
         <g
-          className="gauge-needle"
+          className="gauge-needle-base"
           style={{
             transformOrigin: `${dims.cx}px ${dims.cy}px`,
             transform: `rotate(${needleRotation}deg)`,
             transition: 'transform 600ms cubic-bezier(0.2, 0.8, 0.2, 1)',
           }}
         >
-          <line
-            x1={dims.cx}
-            y1={dims.cy}
-            x2={dims.cx + dims.r * 0.82}
-            y2={dims.cy}
-            stroke="rgba(255,255,255,0.85)"
-            strokeWidth={3}
-            strokeLinecap="round"
-          />
-          <circle cx={dims.cx} cy={dims.cy} r={6} fill="rgba(255,255,255,0.9)" />
-          <circle cx={dims.cx} cy={dims.cy} r={3} fill="rgba(0,0,0,0.35)" />
+          <g
+            className={`gauge-needle ${isNeedleWiggling ? 'wiggling' : ''}`}
+            style={{ transformOrigin: `${dims.cx}px ${dims.cy}px` }}
+          >
+            <line
+              x1={dims.cx}
+              y1={dims.cy}
+              x2={dims.cx + dims.r * 0.82}
+              y2={dims.cy}
+              stroke="rgba(255,255,255,0.85)"
+              strokeWidth={3}
+              strokeLinecap="round"
+            />
+            <circle cx={dims.cx} cy={dims.cy} r={6} fill="rgba(255,255,255,0.9)" />
+            <circle cx={dims.cx} cy={dims.cy} r={3} fill="rgba(0,0,0,0.35)" />
+          </g>
         </g>
       </svg>
 
