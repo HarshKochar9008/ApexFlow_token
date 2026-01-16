@@ -22,7 +22,10 @@ const allowedOrigins = [
   'http://localhost:5174',
   'http://127.0.0.1:5173',
   'http://127.0.0.1:3000',
-  'https://apexflowagent.com'
+  'https://apexflowagent.com',
+  'https://apexflowagent.xyz',
+
+  'https://apexflow-token.onrender.com'
 ];
 
 app.use(cors({
